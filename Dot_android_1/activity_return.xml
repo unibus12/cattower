@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#B6E3F6"
+    android:gravity="center"
+    >
+    <TextView
+        android:id="@+id/ModeStr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="50dp"
+        android:text="모드 실행 중"
+        android:textStyle="bold"
+        android:textColor="#ffffff"
+        android:layout_marginBottom="30dp"
+        android:layout_marginTop="50dp"
+
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="입력"
+        android:textColor="#1D2D88"
+        android:textSize="40dp"
+        android:layout_marginBottom="5dp"
+        />
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/bluereturn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ㅓ"
+            android:textColor="#1D2D88"
+            android:textSize="30dp"
+            android:layout_marginBottom="5dp"
+            />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="종료"
+        android:textColor="#FFFFFF"
+        android:paddingLeft="50dp"
+        android:paddingRight="50dp"
+        android:background="@drawable/shape_list"/>
+</LinearLayout>
