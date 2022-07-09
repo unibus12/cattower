@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#B6E3F6"
+    android:gravity="center"
+    >
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="50dp"
+        android:text="Menu"
+        android:textStyle="bold"
+        android:textColor="#ffffff"
+        android:layout_marginBottom="30dp"
+        android:layout_marginTop="50dp"
+
+        />
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="120dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/han1"
+        android:adjustViewBounds="true"
+        android:id="@+id/btnhan"
+        android:background="@android:color/transparent"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="한글 모드"
+        android:textColor="#1D2D88"
+        android:textSize="20dp"
+        android:layout_marginBottom="5dp"
+        />
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="120dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/eng1"
+        android:adjustViewBounds="true"
+        android:id="@+id/btneng"
+        android:background="@android:color/transparent"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="영어 모드"
+        android:textColor="#1D2D88"
+        android:textSize="20dp"
+        android:layout_marginBottom="5dp"
+        />
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="120dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/manage"
+        android:adjustViewBounds="true"
+        android:id="@+id/btnmanage"
+        android:background="@android:color/transparent"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="학습 관리"
+        android:textColor="#1D2D88"
+        android:textSize="20dp"
+        android:layout_marginBottom="5dp"
+        />
+</LinearLayout>
