@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#b6e3f6" >
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="영어모드"
+        android:textSize="50dp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:layout_marginBottom="20dp"
+        android:layout_marginTop="150dp"
+        android:layout_gravity="center_horizontal"
+        />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:background="@drawable/shape_list"
+        android:layout_gravity="center_vertical"
+        android:text="▶ 알파벳 학습"
+        android:textSize="20dp"
+        android:gravity="center_vertical"
+        android:paddingLeft="10dp"
+        android:id="@+id/btn_eng_mode1"
+        android:textColor="#FFFFFF"
+        />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:background="@drawable/shape_list"
+        android:layout_gravity="center_vertical"
+        android:text="▶ 문장 및 단어 학습"
+        android:textSize="20dp"
+        android:gravity="center_vertical"
+        android:paddingLeft="10dp"
+        android:id="@+id/btn_eng_mode2"
+        android:textColor="#FFFFFF" />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:background="@drawable/shape_list"
+        android:layout_gravity="center_vertical"
+        android:text="▶ 복습 게임"
+        android:textSize="20dp"
+        android:gravity="center_vertical"
+        android:paddingLeft="10dp"
+        android:id="@+id/btn_eng_mode3"
+        android:textColor="#FFFFFF" />
+
+
+</LinearLayout>
