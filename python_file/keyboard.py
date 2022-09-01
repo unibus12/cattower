@@ -8,6 +8,8 @@ from gtts import gTTS
 from jamo import h2j, j2hcj
 from unicode import join_jamos
 import pymysql
+import speech_recognition as sr
+
 
 __author__ = 'info-lab'
 
@@ -16,7 +18,6 @@ GPIO.setwarnings (False)
 
 Row = [19,21,23,29,31,33,35,37]
 Col = [22, 24, 26, 32, 36, 38, 8]
-Col2 = [7,11,13,15]
 
 han1 = ['ㄱ','ㄴ','ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
 han2 = ['ㅏ', 'ㅑ', 'ㅓ', 'ㅕ', 'ㅗ', 'ㅛ', 'ㅜ', 'ㅠ', 'ㅡ', 'ㅣ', 'ㅐ', 'ㅒ', 'ㅔ', 'ㅖ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅢ']
@@ -31,7 +32,7 @@ text=[]
 count = 0
 count1 = 0
 
-sound = '한글' #한글 영어
+sound = ' ' #한글 영어
 
 jcnt = 0
 
@@ -51,8 +52,6 @@ for i in range(8):
         GPIO.setup(Row[i], GPIO.OUT)
 for i in range(7):
         GPIO.setup(Col[i], GPIO.IN)
-for i in range(4):
-		GPIO.setup(Col2[i], GPIO.IN)
 
 def KeyScan():
 	key_scan_line = [0,1,1,1,1,1,1,1]
@@ -140,16 +139,13 @@ def KeyScanEng():
 		getPinData[1] = not GPIO.input(Col[1])
 		getPinData[2] = not GPIO.input(Col[2])
 		getPinData[3] = not GPIO.input(Col[3])
+		#getPinData[4] = not GPIO.input(Col[4])
+		#getPinData[5] = not GPIO.input(Col[5])
+		#getPinData[6] = not GPIO.input(Col[6])
+		#getPinData[7] = not GPIO.input(Col[7])
 
 		if (getPinData[0]!=0 or getPinData[1]!=0 or getPinData[2]!=0 or getPinData[3]!=0):
-			if (getPinData[0]==1 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0):
-				key_num = key_scan_loop*7 + 1
-			elif (getPinData[0]==0 and getPinData[1]==1 and getPinData[2]==0 and getPinData[3]==0):
-				key_num = key_scan_loop*7 + 2
-			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==1 and getPinData[3]==0):
-				key_num = key_scan_loop*7 + 3
-			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==1):
-				key_num = key_scan_loop*7 + 4
+			key_num = key_scan_loop + getPinData[0] + getPinData[1]*9 + getPinData[2]*17 + getPinData[3]*25
 			print(key_num)
 			return key_num
 
@@ -200,6 +196,17 @@ def hangul(num=0):
 		pass
 	print(out1)
 	return out1
+
+def voiceinput():
+	# microphone에서 auido source를 생성합니다
+	r = sr.Recognizer()
+	with sr.Microphone() as source:
+		print("Say something!")
+		audio = r.listen(source)
+	str = r.recognize_google(audio, language='ko-KR')
+	# 구글 웹 음성 API로 인식하기 (하루에 제한 50회)
+	print("Google Speech Recognition thinks you said : " + str)
+	return str
 
 def mode1(a):
 	if(count!=23 and count!=6 and count!=41):
@@ -566,10 +573,6 @@ def percent():
 
 
 # main
-tts=gTTS("언어를 선택하세요. 한글, 영어 ", lang='ko', slow=False)
-tts.save('lan.mp3')
-os.system("omxplayer lan.mp3")
-
 while True:
 	try:
 		if(sound == '한글'):
@@ -655,8 +658,8 @@ while True:
 						break
 					time.sleep(0.5)
 		elif(sound == '영어'): #카운트 바꾸기
-			tts=gTTS("현재 모드 영 어 ", lang='ko', slow=False)
-			tts.save('mode_eng.mp3')
+			#tts=gTTS("현재 모드 영 어 ", lang='ko', slow=False)
+			#tts.save('mode_eng.mp3')
 			os.system("omxplayer mode_eng.mp3")
 			count = 0
 			count1 = 0
@@ -666,12 +669,12 @@ while True:
 
 			while True:
 				if (count1 == 30):
-					tts = gTTS("모드 일번 입니다. 알파벳을 입력해주세요.", lang='ko', slow=False)
-					tts.save('mode_4.mp3')
+					#tts = gTTS("모드 일번 입니다. 알파벳을 입력해주세요.", lang='ko', slow=False)
+					#tts.save('mode_4.mp3')
 					os.system("omxplayer mode_4.mp3")
 					while True:
 						out2 = count1
-						count1 = KeyScan() # count1 = int(input())
+						count1 = KeyScanEng() # count1 = int(input())
 						time.sleep(0.5)
 						if (count1 == 30 or count1 == 31 or count1 == 32):
 							break
@@ -683,11 +686,11 @@ while True:
 						else:
 							print("error")
 				elif (count1 == 31):
-					tts = gTTS("모드 이번 입니다. 단어 또는 문장을 입력해주세요. ", lang='ko', slow=False)
-					tts.save('mode_5.mp3')
+					#tts = gTTS("모드 이번 입니다. 단어 또는 문장을 입력해주세요. ", lang='ko', slow=False)
+					#tts.save('mode_5.mp3')
 					os.system("omxplayer mode_5.mp3")
 					while True:
-						count1 = KeyScan() # count = int(input())
+						count1 = KeyScanEng() # count = int(input())
 						time.sleep(0.5)
 						if (count1 == 30 or count1 == 31 or count1 == 32):
 							text.clear()
@@ -701,8 +704,8 @@ while True:
 						else:
 							print("error")
 				elif (count1 == 32):  # mode3
-					tts = gTTS("모드 삼번 입니다. 문제", lang='ko', slow=False)
-					tts.save('mode_6.mp3')
+					#tts = gTTS("모드 삼번 입니다. 문제", lang='ko', slow=False)
+					#tts.save('mode_6.mp3')
 					os.system("omxplayer mode_6.mp3")
 
 					A = maria_set()
@@ -715,7 +718,7 @@ while True:
 					os.system("omxplayer ex_en.mp3")
 
 					while True:
-						count1 = KeyScan() # count1 = int(input())
+						count1 = KeyScanEng() # count1 = int(input())
 						time.sleep(0.5)
 						if (count1 == 30 or count1 == 31 or count1 == 32):
 							text.clear()
@@ -728,7 +731,7 @@ while True:
 						else:
 							print("error")
 				else:
-					count1 = KeyScan() # count1 = int(input())
+					count1 = KeyScanEng() # count1 = int(input())
 					print(count1)
 					if(count1 == 29):
 						sound = '2'
@@ -741,15 +744,24 @@ while True:
 			#tts.save('lan.mp3')
 			os.system("omxplayer lan.mp3")
 			print('언어 선택')
-			if(sound == '1'):
+
+			sound = voiceinput()
+			print(sound)
+			'''
+			if(sound == voiceinput()):
 				sound = '영어'
 			else:
 				sound = '한글'
+			'''
 
 	except KeyboardInterrupt:
 		# Ctrl + C
 		GPIO.cleanup()
 		sys.exit()
+	except sr.UnknownValueError:
+		print("Google Speech Recognition could not understand audio")
+	except sr.RequestError as e:
+		print("Could not request results from Google Speech Recognition service; {0}".format(e))
 	except:
 		#print('error')
 		print("문제가 많다")
