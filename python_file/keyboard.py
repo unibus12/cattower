@@ -32,6 +32,7 @@ Q = '사과 ', '하늘 ', '비행기 ', '우리나라 ', '안녕 ', '만나서 �
 Q1 = 'apple ', 'sky ', 'airplane ', 'korea ', 'hello ', 'box '
 
 text=[]
+merge_jamo = ""
 
 login_state = "x"
 
@@ -75,6 +76,9 @@ ADDR = (IP, PORT)
 msg = ''
 
 c_mode="한영"
+
+appStudy = "x"
+appsound = ""
 
 def KeyScan():
 	key_scan_line = [0,1,1,1,1,1,1,1]
@@ -258,27 +262,28 @@ def voiceinput():
 	return str
 
 def mode1(a):
-	if(count!=23 and count!=6 and count!=41):
-		text=a
-	elif(count==6 or count==41):
-		text=['ㅂ','ㅣ','ㅇ','ㅡ','ㅂ']
-	else:
-		text=['ㅡ','ㅡ','ㅡ']
+	global merge_jamo
 
-	#print(text)
+	text.clear()
+
+	text.append(a)
 	merge_jamo=join_jamos(text)
 	print(merge_jamo)
 	if(count!=51 and count!=52 and text!='_'):
 		tts = gTTS(merge_jamo, lang='ko', slow=False)
 		tts.save('./music/ex_ko.mp3')
-		#os.system("omxplayer ./music/ex_ko.mp3")
 		os.system("mpg321 -g 100 ./music/ex_ko.mp3")
+		if(appStudy=="o"):
+			client_socket.sendall("현재학습확인,{},{}\r\n".format("한글,1",merge_jamo).encode())
+			print("message back to client : 현재학습확인,{},{}".format("한글,1",merge_jamo))
+
 		if ((count >= 36 and count <= 49) or ((out2 == 36 or out2 == 38 or out2 == 41 or out2 == 42 or out2 == 44) and count == 50)):
-			#os.system("omxplayer ./music/bat_chim.mp3")
 			os.system("mpg321 -g 100 ./music/bat_chim.mp3")
 
 def mode2(a):
 	global jcnt, jcnt2
+	global merge_jamo
+
 	text.append(a)
 	if(count == 54):
 		text.clear()
@@ -347,16 +352,23 @@ def mode2(a):
 
 	merge_jamo=join_jamos(text)
 	print(merge_jamo)
+
+	if(appStudy=="o"):
+		client_socket.sendall("현재학습확인,{},{}\r\n".format("한글,2",merge_jamo).encode())
+		print("message back to client : 현재학습확인,{},{}".format("한글,2",merge_jamo))
+
+	tts = gTTS(merge_jamo, lang='ko', slow=False)
+	tts.save('./music/ex_ko.mp3')
+	os.system("mpg321 -g 100 ./music/ex_ko.mp3")
+
 	if(count == 53):
-		tts = gTTS(merge_jamo, lang='ko', slow=False)
-		tts.save('./music/ex_ko.mp3')
-		#os.system("omxplayer ./music/ex_ko.mp3")
-		os.system("mpg321 -g 100 ./music/ex_ko.mp3")
 		text.clear()
 		jcnt = 0
 
 def mode3(a):
 	global jcnt, A, jcnt2
+	global merge_jamo
+
 	text.append(a)
 	if(count == 54):
 		text.clear()
@@ -426,6 +438,11 @@ def mode3(a):
 
 	merge_jamo=join_jamos(text)
 	print(merge_jamo)
+
+	if(appStudy=="o"):
+		client_socket.sendall("현재학습확인,{},{}\r\n".format("한글,3",merge_jamo).encode())
+		print("message back to client : 현재학습확인,{},{}".format("한글,3",merge_jamo))
+
 	if(count == 53):
 		tts = gTTS(merge_jamo, lang='ko', slow=False)
 		tts.save('./music/ex_ko.mp3')
@@ -442,8 +459,8 @@ def mode3(a):
 			#os.system("omxplayer ./music/ooo.mp3")
 			os.system("mpg321 -g 100 ./music/ooo.mp3")
 			#os.system("gtts-cli '정답입니다 ' -l ko --output ko_o.mp3")
-			kor1, eng1= percent()
-			print(kor1) # 0~100:1 step, 100~200:2 step, 200~300:3 step
+			#kor1, eng1= percent()
+			#print(kor1) # 0~100:1 step, 100~200:2 step, 200~300:3 step
 		else:
 			#os.system("omxplayer ./music/xxx.mp3")
 			os.system("mpg321 -g 100 ./music/xxx.mp3")
@@ -476,9 +493,15 @@ def abc(num=0):
 	return oute
 
 def mode4(a): #알파벳 모드1
+	global merge_jamo
+
 	text=a
 	merge_jamo=join_jamos(text)
 	print(merge_jamo)
+
+	if(appStudy=="o"):
+		client_socket.sendall("현재학습확인,{},{}\r\n".format("영어,1",merge_jamo).encode())
+		print("message back to client : 현재학습확인,{},{}".format("영어,1",merge_jamo))
 
 	if(count1<27):
 		tts = gTTS(merge_jamo, lang='en', slow=False)
@@ -487,6 +510,8 @@ def mode4(a): #알파벳 모드1
 		os.system("mpg321 -g 100 ./music/ex_en.mp3")
 
 def mode5(a): #알파벳 모드2
+	global merge_jamo
+
 	text.append(a)
 	if (count1 == 28):
 		del text[-1]
@@ -494,15 +519,22 @@ def mode5(a): #알파벳 모드2
 
 	merge_jamo=join_jamos(text)
 	print(merge_jamo)
+
+	if(appStudy=="o"):
+		client_socket.sendall("현재학습확인,{},{}\r\n".format("영어,2",merge_jamo).encode())
+		print("message back to client : 현재학습확인,{},{}".format("영어,2",merge_jamo))
+
+	tts = gTTS(merge_jamo, lang='en', slow=False)
+	tts.save('./music/ex_en.mp3')
+	os.system("mpg321 -g 100 ./music/ex_en.mp3")
+
 	if(count1 == 29):
-		tts = gTTS(merge_jamo, lang='en', slow=False)
-		tts.save('./music/ex_en.mp3')
-		#os.system("omxplayer ./music/ex_en.mp3")
-		os.system("mpg321 -g 100 ./music/ex_en.mp3")
 		text.clear()
 
 def mode6(a): #알파벳 모드3
 	global A
+	global merge_jamo
+
 	text.append(a)
 	if (count1 == 28):
 		del text[-1]
@@ -510,11 +542,16 @@ def mode6(a): #알파벳 모드3
 
 	merge_jamo=join_jamos(text)
 	print(merge_jamo)
+
+	if(appStudy=="o"):
+		client_socket.sendall("현재학습확인,{},{}\r\n".format("영어,3",merge_jamo).encode())
+		print("message back to client : 현재학습확인,{},{}".format("영어,3",merge_jamo))
+
 	if(count1 == 29):
 		tts = gTTS(merge_jamo, lang='en', slow=False)
 		tts.save('./music/ex_en.mp3')
-		#os.system("omxplayer ./music/ex_en.mp3")
 		os.system("mpg321 -g 100 ./music/ex_en.mp3")
+
 		text.clear()
 
 		print('정답 비교'+A)
@@ -597,11 +634,13 @@ def maria_set():
 		return wordarr[12]
 
 def han_mode():
-	global count, A, text, c_mode
+	global count, A, text, c_mode, out2
+	count = 0
+	tts = gTTS("한글이 선택되었습니다.", lang='ko', slow=False)
+	tts.save('./music/mode_kor.mp3')
 	os.system("mpg321 -g 100 ./music/mode_kor.mp3")
 	os.system("mpg321 -g 100 ./music/mode_sel.mp3")
 
-	count = 0
 	while True:
 		if(count==54): # mode1
 			c_mode="한글,1"
@@ -612,12 +651,16 @@ def han_mode():
 				count = KeyScan() #count = int(input())
 				time.sleep(0.5)
 				if(count == 54 or count == 55 or count == 56):
+					text.clear()
 					break
 				elif((count == 53 and (not join_jamos(text).strip()))):
 					#os.system("omxplayer ./music/mode_sel.mp3")
 					os.system("mpg321 -g 100 ./music/mode_sel.mp3")
+					text.clear()
 					break
-				elif (str(type(count)) == "<class 'int'>"):
+				elif(appsound=="영어"):
+					break
+				elif(str(type(count)) == "<class 'int'>"):
 					mode1(hangul(count))
 				else:
 					pass
@@ -634,6 +677,8 @@ def han_mode():
 				elif((count == 53 and (not join_jamos(text).strip()))):
 					#os.system("omxplayer ./music/mode_sel.mp3")
 					os.system("mpg321 -g 100 ./music/mode_sel.mp3")
+					break
+				elif(appsound=="영어"):
 					break
 				elif (str(type(count)) == "<class 'int'>"):
 					mode2(hangul(count))
@@ -664,10 +709,15 @@ def han_mode():
 					#os.system("omxplayer ./music/mode_sel.mp3")
 					os.system("mpg321 -g 100 ./music/mode_sel.mp3")
 					break
+				elif(appsound=="영어"):
+					break
 				elif (str(type(count)) == "<class 'int'>"):
 					mode3(hangul(count))
 				else:
 					pass
+		elif(appsound=="영어"):
+			text.clear()
+			break
 		else:
 			count = KeyScan() #count = int(input())
 			print(count)
@@ -677,11 +727,11 @@ def han_mode():
 
 def eng_mode():
 	global count1, A, text, c_mode
-	#os.system("omxplayer ./music/mode_eng.mp3") # 현재 모드 영 어
-	#os.system("omxplayer ./music/mode_sel.mp3")
+	count1 = 0
+	tts = gTTS("영어가 선택되었습니다.", lang='ko', slow=False)
+	tts.save('./music/mode_eng.mp3')
 	os.system("mpg321 -g 100 ./music/mode_eng.mp3")
 	os.system("mpg321 -g 100 ./music/mode_sel.mp3")
-	count1 = 0
 
 	while True:
 		if (count1 == 30):
@@ -697,6 +747,8 @@ def eng_mode():
 				elif((count1 == 29 and (not join_jamos(text).strip()))):
 					#os.system("omxplayer ./music/mode_sel.mp3")
 					os.system("mpg321 -g 100 ./music/mode_sel.mp3")
+					break
+				elif(appsound=="한글"):
 					break
 				elif (str(type(count1)) == "<class 'int'>"):
 					mode4(abc(count1))
@@ -715,6 +767,8 @@ def eng_mode():
 				elif((count1 == 29 and (not join_jamos(text).strip()))):
 					#os.system("omxplayer ./music/mode_sel.mp3")
 					os.system("mpg321 -g 100 ./music/mode_sel.mp3")
+					break
+				elif(appsound=="한글"):
 					break
 				elif (str(type(count1)) == "<class 'int'>"):
 					mode5(abc(count1))
@@ -744,10 +798,15 @@ def eng_mode():
 					#os.system("omxplayer ./music/mode_sel.mp3")
 					os.system("mpg321 -g 100 ./music/mode_sel.mp3")
 					break
+				elif(appsound=="한글"):
+					break
 				elif (str(type(count1)) == "<class 'int'>"):
 					mode6(abc(count1))
 				else:
 					pass
+		elif(appsound=="한글"):
+			text.clear()
+			break
 		else:
 			count1 = KeyScanEng() # count1 = int(input())
 			print(count1)
@@ -847,7 +906,7 @@ def face_recognition():
 	print(names)
 
 	# Initialize and start realtime video capture
-	cam = cv2.VideoCapture(-1)
+	cam = cv2.VideoCapture(cv2.CAP_DSHOW+0)
 	cam.set(3, 640) # set video widht
 	cam.set(4, 480) # set video height
 
@@ -857,8 +916,7 @@ def face_recognition():
 	percent = []
 
 	for count_p in range(10):
-		ret, img =cam.read()
-		#img = cv2.flip(img, -1) # Flip vertically
+		ret, img = cam.read()
 		gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
 		faces = faceCascade.detectMultiScale(
@@ -923,72 +981,66 @@ def menu_two():
 	prtid = face_recognition()
 
 def server():
-	global prtid, count, sound, count1, c_mode, text, menu, login_state
+	global msg, prtid, count, appsound, count1, c_mode, menu, login_state
+	global appStudy, merge_jamo
 	print("thread start")
 
-	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
-		server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		server_socket.bind(ADDR)  # 주소 바인딩
-		server_socket.listen()  # 클라이언트의 요청을 받을 준비
-		client_socket, client_addr = server_socket.accept()  # 수신대기, 접속한 클라이언트 정보 (소켓, 주소) 반환
-		print("connected")
 	while (True):
 		msg = client_socket.recv(1024).decode()
 		if (msg!=""):
 			print("[{}] massage : {}".format(client_addr, msg))
-			if(msg[:4]=="로그인,"):
-				msg_split=msg.split(',',2)
-				print("id={}, pw={}".format(msg_split[1], msg_split[2]))
-				if(msg_split[1]=="" and msg_split[2]==''):
-					client_socket.sendall("로그인,ok\r\n".encode())
-					prtid="user 1"
-					print("로그인ok\n")
-					login_state = "o"
-				else:
-					print("로그인실패logfail\n")
-					client_socket.sendall("로그인,log_fail\r\n".encode())
-					login_state = "x"
-			if(msg=="얼굴로그인"):
-				prtid = face_recognition()
-				if(prtid=="unknown"):
-					client_socket.sendall("로그인,facelog_fail\r\n".encode())
-					print("로그인실패facelogfail")
-					login_state = "x"
-				else:
-					login_state = "o"
+			if(msg=="회원가입"):
+				menu = "일"
+			if(msg=="로그인"):
+				menu = "이"
+			if(msg=="메뉴"):
+				appStudy = "x"
 			if(msg=="한글"):
-				sound="한글"
+				appsound="한글"
 			if(msg=="영어"):
-				sound="영어"
+				appsound="영어"
 			if(msg=="한글,1"):
+				appsound="한글"
 				count=54
 			if(msg=="한글,2"):
+				appsound="한글"
 				count=55
 			if(msg=="한글,3"):
+				appsound="한글"
 				count=56
 			if(msg=="영어,1"):
+				appsound="영어"
 				count1=30
 			if(msg=="영어,2"):
+				appsound="영어"
 				count1=31
 			if(msg=="영어,3"):
+				appsound="영어"
 				count1=32
 			if(msg=="현재학습확인"):
-				#msg2=join_jamos(text)
-				msg2="a"
-				client_socket.sendall("현재학습확인,{},{}\r\n".format(c_mode,msg2).encode())
-				print("message back to client : 현재학습확인,{},{}".format(c_mode,msg2))
+				appStudy = "o"
+				if(merge_jamo):
+					print("study = ",merge_jamo)
+					client_socket.sendall("현재학습확인,{},{}\r\n".format(c_mode,merge_jamo).encode())
+					print("message back to client : 현재학습확인,{},{}".format(c_mode,merge_jamo))
+				else:
+					print("study = ",merge_jamo)
+					client_socket.sendall("현재학습확인,{},입력대기중\r\n".format(c_mode).encode())
+					print("message back to client : 현재학습확인,{},입력대기중".format(c_mode))
 			if(msg[:2]=="정보"):
 				msg1, msg2 = percent()
 				client_socket.sendall("정보,{},{}\r\n".format(msg1,msg2).encode())
 				print("message back to client : 정보,{},{}".format(msg1,msg2))
-			if(msg=="회원가입"):
-				menu = "일"
-			if(msg[:5]=="얼굴등록,"):
-				msg_split=msg.split(',',2)
-				new_id=msg_split[1]
-				new_pw=msg_split[2]
-				print("회원가입 id={}, pw={}".format(new_id, new_pw))
 	client_socket.close()  # 클라이언트 소켓 종료
+
+print("server start")
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+	server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+	server_socket.bind(ADDR)  # 주소 바인딩
+	server_socket.listen()  # 클라이언트의 요청을 받을 준비
+	client_socket, client_addr = server_socket.accept()  # 수신대기, 접속한 클라이언트 정보 (소켓, 주소) 반환
+	print("connected")
 
 t=threading.Thread(target=server)
 t.start()
@@ -997,15 +1049,23 @@ t.start()
 while True:
 	try:
 		if(login_state == "x"):
-			tts = gTTS("회원가입을 하시려면 일 , 로그인을 하시려면 이 를 말해주세요.", lang='ko', slow=False)
-			tts.save('./music/menu_sel.mp3')
-			os.system("mpg321 -g 100 ./music/menu_sel.mp3") # 회원가입을 하시려면 일 , 로그인을 하시려면 이 를 말해주세요.
-
-			if(login_state == "o"): # wifi 로그인
-				pass
-			elif(menu == "일"):
-				menu_one()
-				menu = ""
+			if(menu == "일"):
+				if(msg == "얼굴등록"):
+					menu_one()
+					while(msg=="얼굴등록"):
+						pass
+					if(msg=="회원가입,success"):
+						#tts = gTTS("회원가입이 완료되었습니다.", lang='ko', slow=False)
+						#tts.save('./music/signup_success.mp3')
+						os.system("mpg321 -g 100 ./music/signup_success.mp3")
+					elif(msg=="회원가입,cancel"):
+						#tts = gTTS("회원가입이 취소되었습니다.", lang='ko', slow=False)
+						#tts.save('./music/signup_fail.mp3')
+						os.system("mpg321 -g 100 ./music/signup_fail.mp3")
+					msg = ""
+					menu = ""
+				else:
+					pass
 			elif(menu == "이"):
 				menu_two()
 				print("prtid = " + prtid)
@@ -1013,30 +1073,45 @@ while True:
 				if(prtid != "unknown"):
 					os.system("mpg321 -g 100 ./music/login_success.mp3") # 로그인 성공했습니다.
 					login_state = "o"
+					client_socket.sendall("로그인,success\r\n".encode())
+					print("face login [{}] success".format(prtid))
 				else:
 					os.system("mpg321 -g 100 ./music/login_fail.mp3") # 로그인 실패했습니다.
 					login_state = "x"
+					client_socket.sendall("로그인,fail\r\n".encode())
+					client_socket.sendall("로그인,facelog_fail\r\n".encode())
+					print("face login fail")
 				menu = ""
 			else:
-				menu = voiceinput()
+				tts = gTTS("회원가입을 하시려면 일 , 로그인을 하시려면 이 를 말해주세요.", lang='ko', slow=False)
+				tts.save('./music/menu_sel.mp3')
+				os.system("mpg321 -g 100 ./music/menu_sel.mp3") # 회원가입을 하시려면 일 , 로그인을 하시려면 이 를 말해주세요.
+				if(menu != "일" and menu != "이"):
+					menu = voiceinput()
+					if(menu=="일"):
+						msg = "얼굴등록"
 
 		elif(login_state == "o"):
 			if(sound == '한글'):
 				han_mode()
-				sound = "1"
+				sound = ""
 			elif(sound == '영어'): #카운트 바꾸기
 				eng_mode()
-				sound = "2"
+				sound = ""
 			else:
 				# 언어 선택
-				#os.system("omxplayer ./music/lan.mp3") # 언어를 선택하세요. 한글, 영어
-				os.system("mpg321 -g 100 ./music/lan.mp3")
+				os.system("mpg321 -g 100 ./music/lan.mp3") # 언어를 선택하세요. 한글, 영어
 				print('언어 선택')
-				#time.sleep(2)
-				#sound = voiceinput()
-				print(sound)
-				if(count==53):
-					sound = '영어'
+				if(appsound!="한글" and appsound!="영어"):
+					sound = voiceinput()
+					print(sound)
+					c_mode = ""
+				elif(appsound=="한글"):
+					sound = "한글"
+					c_mode = ""
+				else:
+					sound = "영어"
+					c_mode = ""
 
 	except KeyboardInterrupt:
 		# Ctrl + C
@@ -1046,6 +1121,6 @@ while True:
 		print("Google Speech Recognition could not understand audio")
 	except sr.RequestError as e:
 		print("Could not request results from Google Speech Recognition service; {0}".format(e))
-	except:
-		print("문제가 많다")
-		pass
+	#except:
+	#	print("문제가 많다")
+	#	pass
