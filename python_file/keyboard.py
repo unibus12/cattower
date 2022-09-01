@@ -89,16 +89,16 @@ def server():
 				msg_split=msg.split(',', 2)
 				print("id={}, pw={}".format(msg_split[1], msg_split[2]))
 				if(msg_split[1]=="" and msg_split[2]==''):
-					client_socket.sendall("로그인,ok".encode())
+					client_socket.sendall("로그인,ok\r\n".encode())
 					prtid="user 1"
 					print("로그인ok\n")
 				else:
 					print("로그인실패logfail\n")
-					client_socket.sendall("로그인,log_fail".encode())
+					client_socket.sendall("로그인,log_fail\r\n".encode())
 			if(msg=="얼굴로그인"):
 				prtid = face_recognition()
 				if(prtid=="unknown"):
-					client_socket.sendall("로그인,facelog_fail".encode())
+					client_socket.sendall("로그인,facelog_fail\r\n".encode())
 					print("로그인실패facelogfail")
 			if(msg=="한글"):
 				sound="한글"
@@ -125,6 +125,12 @@ def server():
 				msg1, msg2 = percent()
 				client_socket.sendall("정보,{},{}\r\n".format(msg1,msg2).encode())
 				print("message back to client : 정보,{},{}".format(msg1,msg2))
+                        if(msg=="회원가입"):
+                                msg_split=msg.split(',', 2)
+                                new_id=msg_split[1]
+                                new_pw=msg_split[2]
+                                print("회원가입 id={}, pw={}".format(new_id, new_pw))
+                        
 	client_socket.close()  # 클라이언트 소켓 종료
 
 
