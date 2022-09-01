@@ -3,6 +3,7 @@ import RPi.GPIO as GPIO
 import os
 import sys
 import random
+import time
 from gtts import gTTS
 from jamo import h2j, j2hcj
 from unicode import join_jamos
@@ -14,20 +15,22 @@ GPIO.setwarnings (False)
 
 Row = [19,21,23,29,31,33,35,37]
 Col = [22, 24, 26, 32, 36, 38, 40]
-#sp = 3
-#bsp = 5
-#ok = 7
-#bnt = [11, 13, 15]
+Col2 = [7,11,13,15]
 
 han1 = ['ㄱ','ㄴ','ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
 han2 = ['ㅏ', 'ㅑ', 'ㅓ', 'ㅕ', 'ㅗ', 'ㅛ', 'ㅜ', 'ㅠ', 'ㅡ', 'ㅣ', 'ㅐ', 'ㅒ', 'ㅔ', 'ㅖ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅢ']
 han3 = ['ㄲ','ㄸ','ㅃ', 'ㅆ', 'ㅉ', ' ']
+eng1=['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
 Q = '사과 ', '하늘 ', '비행기 ', '우리나라 ', '안녕 ', '만나서 반가워 '
+Q2 = 'apple', 'sky', 'airplane', 'korea', 'hello', 'nice to meet you'
 
 text=[]
 
 count = 0
+count1 = 0
+
+sound = ' ' #한글 영어
 
 jcnt = 0
 
@@ -35,22 +38,14 @@ for i in range(8):
         GPIO.setup(Row[i], GPIO.OUT)
 for i in range(7):
         GPIO.setup(Col[i], GPIO.IN)
-
-#GPIO.setup(sp, GPIO.IN)
-#GPIO.setup(bsp, GPIO.IN)
-#GPIO.setup(ok, GPIO.IN)
-#GPIO.setup(bnt[0], GPIO.IN)
-#GPIO.setup(bnt[1], GPIO.IN)
-#GPIO.setup(bnt[2], GPIO.IN)
+for i in range(4):
+	GPIO.setup(Col2[i], GPIO.IN)
 
 def KeyScan():
-	# 상위 니블을 스위칭하면서 출력
-	# Init_data, PORTC의 상위 니블의 출력 값
-	key_scan_line = [1,1,1,1,1,1,1,0]
-	#키 스캔 라인 변경을 위한 반복문 인자, 키 매트릭스 열의 입력 값
+	key_scan_line = [0,1,1,1,1,1,1,1]
 	key_scan_loop = 0
 	getPinData = [0,0,0,0,0,0,0]
-	key_num = 0 # 실제 눌린 키 매트릭스 값
+	key_num = 0 # 실제 눌린 값
 
 	#키 스캔 반복문
 	for key_scan_loop in range(8):
@@ -66,7 +61,7 @@ def KeyScan():
 		GPIO.output(Row[7], key_scan_line[7])
 		time.sleep(0.000001)
 		# 키 매트릭스의 열 값 취득
-        	# C 포트의 하위 니블 값, 74LS14 사용으로 입력 신호가 반전되어 들어옴 // col
+        	# col
 		getPinData[0] = GPIO.input(Col[0])
 		getPinData[1] = GPIO.input(Col[1])
 		getPinData[2] = GPIO.input(Col[2])
@@ -77,39 +72,87 @@ def KeyScan():
 
 		if (getPinData[0]!=0 or getPinData[1]!=0 or getPinData[2]!=0 or getPinData[3]!=0 or getPinData[4]!=0 or getPinData[5]!=0 or getPinData[6]!=0):
 			if (getPinData[0]==1 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0):
-				key_num = key_scan_loop*6 + 1
-                                # 입력의 반전된 값
-                        	# 현재 count 값에 6를 곱한 후
-                        	# 숫자를 더하고 key_num 변수에 저장
+				key_num = key_scan_loop*7 + 1
 			elif (getPinData[0]==0 and getPinData[1]==1 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0):
-				key_num = key_scan_loop*6 + 2
+				key_num = key_scan_loop*7 + 2
 			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==1 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0):
-				key_num = key_scan_loop*6 + 3
+				key_num = key_scan_loop*7 + 3
 			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==1 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0):
-				key_num = key_scan_loop*6 + 4
+				key_num = key_scan_loop*7 + 4
 			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==1 and getPinData[5]==0 and getPinData[6]==0):
-				key_num = key_scan_loop*6 + 5
+				key_num = key_scan_loop*7 + 5
 			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==1 and getPinData[6]==0):
-				key_num = key_scan_loop*6 + 6
+				key_num = key_scan_loop*7 + 6
 			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==1):
-				key_num = key_scan_loop*6 + 7
-			
+				key_num = key_scan_loop*7 + 7
 			print(key_num)
 			return key_num
 
-        	#key_scan_line 값을 순차적으로 1비트씩 총 3회 시프트함
-		key_scan_line[0] = key_scan_line[1]
-		key_scan_line[1] = key_scan_line[2]
-		key_scan_line[2] = key_scan_line[3]
-		key_scan_line[3] = key_scan_line[4]
-		key_scan_line[4] = key_scan_line[5]
-		key_scan_line[5] = key_scan_line[6]
-		key_scan_line[6] = key_scan_line[7]
+        	#key_scan_line 값을 순차적으로 1비트씩 총 7회 시프트함
+		key_scan_line[7] = key_scan_line[6]
+		key_scan_line[6] = key_scan_line[5]
+		key_scan_line[5] = key_scan_line[4]
+		key_scan_line[4] = key_scan_line[3]
+		key_scan_line[3] = key_scan_line[2]
+		key_scan_line[2] = key_scan_line[1]
+		key_scan_line[1] = key_scan_line[0]
 
 		if (key_scan_loop == 7):
-			key_scan_line[7] = 0
+			key_scan_line[0] = 0
 		else:
-			key_scan_line[7] = 1
+			key_scan_line[0] = 1
+
+def KeyScanEng():
+	key_scan_line = [0,1,1,1,1,1,1,1]
+	key_scan_loop = 0
+	getPinData = [0,0,0,0]
+	key_num = 0 # 실제 눌린 값
+
+	#키 스캔 반복문
+	for key_scan_loop in range(8):
+        	# 키 매트릭스의 스캔 라인 설정 출력 값
+        	# row
+		GPIO.output(Row[0], key_scan_line[0])
+		GPIO.output(Row[1], key_scan_line[1])
+		GPIO.output(Row[2], key_scan_line[2])
+		GPIO.output(Row[3], key_scan_line[3])
+		GPIO.output(Row[4], key_scan_line[4])
+		GPIO.output(Row[5], key_scan_line[5])
+		GPIO.output(Row[6], key_scan_line[6])
+		GPIO.output(Row[7], key_scan_line[7])
+		time.sleep(0.000001)
+		# 키 매트릭스의 열 값 취득
+        	# col
+		getPinData[0] = GPIO.input(Col[0])
+		getPinData[1] = GPIO.input(Col[1])
+		getPinData[2] = GPIO.input(Col[2])
+		getPinData[3] = GPIO.input(Col[3])
+
+		if (getPinData[0]!=0 or getPinData[1]!=0 or getPinData[2]!=0 or getPinData[3]!=0):
+			if (getPinData[0]==1 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0):
+				key_num = key_scan_loop*7 + 1
+			elif (getPinData[0]==0 and getPinData[1]==1 and getPinData[2]==0 and getPinData[3]==0):
+				key_num = key_scan_loop*7 + 2
+			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==1 and getPinData[3]==0):
+				key_num = key_scan_loop*7 + 3
+			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==1):
+				key_num = key_scan_loop*7 + 4
+			print(key_num)
+			return key_num
+
+        	#key_scan_line 값을 순차적으로 1비트씩 총 7회 시프트함
+		key_scan_line[7] = key_scan_line[6]
+		key_scan_line[6] = key_scan_line[5]
+		key_scan_line[5] = key_scan_line[4]
+		key_scan_line[4] = key_scan_line[3]
+		key_scan_line[3] = key_scan_line[2]
+		key_scan_line[2] = key_scan_line[1]
+		key_scan_line[1] = key_scan_line[0]
+
+		if (key_scan_loop == 7):
+			key_scan_line[0] = 0
+		else:
+			key_scan_line[0] = 1
 
 def hangul(num=0):
 	global out1
@@ -162,9 +205,9 @@ def mode1(a):
 	tts.save('ex_ko.mp3')
 	os.system("omxplayer ex_ko.mp3")
 	if ((count >= 36 and count <= 49) or ((out2 == 36 or out2 == 38 or out2 == 41 or out2 == 42 or out2 == 44) and count == 50)):
-		tts = gTTS("받 침", lang='ko', slow=False)
-		tts.save('ex_ko.mp3')
-		os.system("omxplayer ex_ko.mp3")
+		#tts = gTTS("받 침", lang='ko', slow=False)
+		#tts.save('bat_chim.mp3')
+		os.system("omxplayer bat_chim.mp3")
 
 def mode2(a):
 	global jcnt, jcnt2
@@ -325,19 +368,19 @@ def mode3(a):
 		print('정답 비교'+A)
 
 		if (A==merge_jamo):
-			os.system("omxplayer o.mp3")
+			os.system("omxplayer ooo.mp3")
 			#os.system("gtts-cli '정답입니다 ' -l ko --output ko_o.mp3")
-			os.system("omxplayer ko_o.mp3")
+			#os.system("omxplayer ko_o.mp3")
 		else:
-			os.system("omxplayer x.mp3")
-			os.system("gtts-cli '틀렸습니다. ' -l ko --output ko_x.mp3")
-			os.system("omxplayer ko_x.mp3")
+			os.system("omxplayer xxx.mp3")
+			#os.system("gtts-cli '틀렸습니다. ' -l ko --output ko_x.mp3")
+			#os.system("omxplayer ko_x.mp3")
 		A = random.choice(Q)
 
 		print('문제'+A)
-		tts = gTTS('문제', lang='ko', slow=False)
-		tts.save('ex_ko.mp3')
-		os.system("omxplayer ex_ko.mp3")
+		#tts = gTTS('문제', lang='ko', slow=False)
+		#tts.save('question.mp3')
+		os.system("omxplayer question.mp3")
 
 		tts = gTTS(A, lang='ko', slow=False)
 		tts.save('ex_ko.mp3')
@@ -345,15 +388,29 @@ def mode3(a):
 
 
 # main
+tts=gTTS("언어를 선택하세요. 한글, 영어", lang='ko', slow=False)
+tts.save('lan.mp3')
+os.system("omxplayer lan.mp3")
+
+
+
+#tts=gTTS("모드를 선택해주세요.", lang='ko', slow=False)
+#tts.save('mode_sel.mp3')
+#os.system("omxplayer mode_sel.mp3")
+
 while True :
+
 	try:
+		if(sound == '한글'):
 		if(count==54):
-			tts = gTTS("모드 일번 입니다. 자음, 모음을 입력해주세요.", lang='ko', slow=False)
-			tts.save('ex_ko.mp3')
-			os.system("omxplayer ex_ko.mp3")
+			#tts = gTTS("모드 일번 입니다. 자음, 모음을 입력해주세요.", lang='ko', slow=False)
+			#tts.save('mode_1.mp3')
+			os.system("omxplayer mode_1.mp3")
 			while True:
 				out2 = count
-				count=int(input())
+				count = KeyScan()
+				time.sleep(0.5)
+				#count = int(input())
 				if(count == 54 or count == 55 or count == 56):
 					break
 				elif (str(type(count)) == "<class 'int'>"):
@@ -362,11 +419,13 @@ while True :
 				else:
 					print("error")
 		elif(count==55):
-			tts = gTTS("모드 이번 입니다. 단어 또는 문장을 입력해주세요. ", lang='ko', slow=False)
-			tts.save('ex_ko.mp3')
-			os.system("omxplayer ex_ko.mp3")
+			#tts = gTTS("모드 이번 입니다. 단어 또는 문장을 입력해주세요. ", lang='ko', slow=False)
+			#tts.save('mode_2.mp3')
+			os.system("omxplayer mode_2.mp3")
 			while True:
-				count=int(input())
+				count = KeyScan()
+				time.sleep(0.5)
+				#count = int(input())
 				if(count == 54 or count == 55 or count == 56):
 					text.clear()
 					break
@@ -376,9 +435,9 @@ while True :
 				else:
 					print("error")
 		elif(count==56): # mode3
-			tts = gTTS("모드 삼번 입니다. 문제", lang='ko', slow=False)
-			tts.save('ex_ko.mp3')
-			os.system("omxplayer ex_ko.mp3")
+			#tts = gTTS("모드 삼번 입니다. 문제", lang='ko', slow=False)
+			#tts.save('mode_3.mp3')
+			os.system("omxplayer mode_3.mp3")
 
 			A = random.choice(Q)
 
@@ -389,7 +448,9 @@ while True :
 			os.system("omxplayer ex_ko.mp3")
 
 			while True:
-				count=int(input())
+				count = KeyScan()
+				time.sleep(0.5)
+				#count = int(input())
 				if(count==54 or count==55 or count==56):
 					text.clear()
 					break
@@ -398,17 +459,19 @@ while True :
 				else:
 					print("error")
 		else:
-			#count = KeyScan()
-			#print(count)
-			count = int(input())
+			count = KeyScan()
+			print(count)
+			time.sleep(0.5)
+			#count = int(input())
 
 	except KeyboardInterrupt:
 		# Ctrl + C
+		GPIO.cleanup()
 		sys.exit()
 	except:
 		print('error')
-		tts = gTTS("아무것도 입력되지 않았습니다.  모드를 다시 선택해주세요", lang='ko', slow=False)
-		tts.save('ex_ko.mp3')
-		os.system("omxplayer ex_ko.mp3")
+		#tts = gTTS("아무것도 입력되지 않았습니다.  모드를 다시 선택해주세요", lang='ko', slow=False)
+		#tts.save('mode_error.mp3')
+		os.system("omxplayer mode_error.mp3")
 
 		pass
