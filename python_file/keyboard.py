@@ -23,7 +23,7 @@ han1 = ['ㄱ','ㄴ','ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ
 han2 = ['ㅏ', 'ㅑ', 'ㅓ', 'ㅕ', 'ㅗ', 'ㅛ', 'ㅜ', 'ㅠ', 'ㅡ', 'ㅣ', 'ㅐ', 'ㅒ', 'ㅔ', 'ㅖ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅢ']
 han3 = ['ㄲ','ㄸ','ㅃ', 'ㅆ', 'ㅉ', ' ']
 
-Q = '사과 ', '하늘 ', '비행기 ', '우리나라 ', '안녕하세요 ', '만나서 반가워 '
+Q = '사과 ', '하늘 ', '비행기 ', '우리나라 ', '안녕 ', '만나서 반가워 '
 
 text=[]
 
@@ -148,11 +148,14 @@ def hangul(num=0):
 	return out1
 
 def mode1(a):
-	if(count!=23):
+	if(count!=23 and count!=6 and count!=41):
 		text=a
+	elif(count==6 or count==41):
+		text=['ㅂ','ㅣ','ㅇ','ㅡ','ㅂ']
 	else:
-		text='으'
+		text=['ㅡ','ㅡ','ㅡ']
 
+	#print(text)
 	merge_jamo=join_jamos(text)
 	print(merge_jamo)
 
@@ -178,7 +181,7 @@ def mode2(a):
 			jcnt=jcnt2
 			jcnt2=0
 	elif (count==50):
-		if(text[-2]!='ㄴ' or text[-2]!='ㄹ' or text[-2]!='ㅁ' or text[-2]!='ㅇ' or text[-2]!='ㅊ' or text[-2]!='ㅋ' or text[-2]!='ㅌ' or text[-2]!='ㅍ' or text[-2]!='ㅎ'):
+		if(text[-2]=='ㄴ' or text[-2]=='ㄹ' or text[-2]=='ㅁ' or text[-2]=='ㅇ' or text[-2]=='ㅊ' or text[-2]=='ㅋ' or text[-2]=='ㅌ' or text[-2]=='ㅍ' or text[-2]=='ㅎ'):
 			text.insert(-2,text[-2])
 		del text[-2]
 	if ((count>= 1 and count<=14) or (count>=36 and count<=49)):
@@ -256,7 +259,7 @@ def mode3(a):
 			jcnt=jcnt2
 			jcnt2=0
 	elif (count==50):
-		if(text[-2]!='ㄴ' or text[-2]!='ㄹ' or text[-2]!='ㅁ' or text[-2]!='ㅇ' or text[-2]!='ㅊ' or text[-2]!='ㅋ' or text[-2]!='ㅌ' or text[-2]!='ㅍ' or text[-2]!='ㅎ'):
+		if(text[-2]=='ㄴ' or text[-2]=='ㄹ' or text[-2]=='ㅁ' or text[-2]=='ㅇ' or text[-2]=='ㅊ' or text[-2]=='ㅋ' or text[-2]=='ㅌ' or text[-2]=='ㅍ' or text[-2]=='ㅎ'):
 			text.insert(-2,text[-2])
 		del text[-2]
 
@@ -328,7 +331,7 @@ def mode3(a):
 			os.system("omxplayer ko_o.mp3")
 		else:
 			os.system("omxplayer x.mp3")
-			#os.system("gtts-cli '오답입니다 ' -l ko --output ko_x.mp3")
+			os.system("gtts-cli '틀렸습니다. ' -l ko --output ko_x.mp3")
 			os.system("omxplayer ko_x.mp3")
 		A = random.choice(Q)
 
@@ -346,7 +349,7 @@ def mode3(a):
 while True :
 	try:
 		if(count==54):
-			tts = gTTS("모드 일번 입니다.", lang='ko', slow=False)
+			tts = gTTS("모드 일번 입니다. 자음, 모음을 입력해주세요.", lang='ko', slow=False)
 			tts.save('ex_ko.mp3')
 			os.system("omxplayer ex_ko.mp3")
 			while True:
@@ -360,7 +363,7 @@ while True :
 				else:
 					print("error")
 		elif(count==55):
-			tts = gTTS("모드 이번 입니다.", lang='ko', slow=False)
+			tts = gTTS("모드 이번 입니다. 단어 또는 문장을 입력해주세요. ", lang='ko', slow=False)
 			tts.save('ex_ko.mp3')
 			os.system("omxplayer ex_ko.mp3")
 			while True:
