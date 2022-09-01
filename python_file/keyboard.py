@@ -310,9 +310,12 @@ def mode3(a):
 
 		if (A==merge_jamo):
 			os.system("omxplayer o.mp3")
+			#os.system("gtts-cli '정답입니다 ' -l ko --output ko_o.mp3")
+			os.system("omxplayer ko_o.mp3")
 		else:
 			os.system("omxplayer x.mp3")
-
+			#os.system("gtts-cli '오답입니다 ' -l ko --output ko_x.mp3")
+			os.system("omxplayer ko_x.mp3")
 		A = random.choice(Q)
 
 		print('문제'+A)
@@ -386,7 +389,7 @@ while True :
 		sys.exit()
 	except:
 		print('error')
-		tts = gTTS("아무것도 입력되지 않았습니다  모드를 다시 선택해주세요", lang='ko', slow=False)
+		tts = gTTS("아무것도 입력되지 않았습니다.  모드를 다시 선택해주세요", lang='ko', slow=False)
 		tts.save('ex_ko.mp3')
 		os.system("omxplayer ex_ko.mp3")
 
