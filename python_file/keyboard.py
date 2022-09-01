@@ -781,6 +781,7 @@ def face_training():
 
 
 def face_recognition():
+	global percent
 	recognizer = cv2.face.LBPHFaceRecognizer_create()
 	recognizer.read('trainer/trainer.yml')
 	cascadePath = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
@@ -802,15 +803,16 @@ def face_recognition():
 	print(names)
 
 	# Initialize and start realtime video capture
-	cam = cv2.VideoCapture(0)
+	cam = cv2.VideoCapture(-1)
 	cam.set(3, 640) # set video widht
 	cam.set(4, 480) # set video height
 
 	# Define min window size to be recognized as a face
 	minW = 0.1*cam.get(3)
 	minH = 0.1*cam.get(4)
+	percent = []
 
-	while True:
+	for count_p in range(10):
 		ret, img =cam.read()
 		#img = cv2.flip(img, -1) # Flip vertically
 		gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -828,23 +830,39 @@ def face_recognition():
 			# Check if confidence is less them 100 ==> "0" is perfect match
 			if (confidence < 100):
 				id = names[id]
+				percent.append(round(100 - confidence))
 				confidence = "  {0}%".format(round(100 - confidence))
+				print("confidence = " + str(confidence))
 			else:
 				id = "unknown"
 				confidence = "  {0}%".format(round(100 - confidence))
+				print("confidence = " + str(confidence))
+
+			print("촬영 횟수 = "+str(count_p+1))
+
 			cv2.putText(img, str(id), (x+5,y-5), font, 1, (255,255,255), 2)
 			cv2.putText(img, str(confidence), (x+5,y+h-5), font, 1, (255,255,0), 1)
 		cv2.imshow('camera',img)
+
 		k = cv2.waitKey(10) & 0xff # Press 'ESC' for exiting video
 		if k == 27:
 			break
+
+	percent_arr = np.array(percent)
+	Mean = round(np.mean(percent_arr))
+	print("mean = " + str(Mean))
+	if(Mean > 50):
+		pass
+	else:
+		id = "unknown"
 
 	# Do a bit of cleanup
 	print("\n [INFO] Exiting Program and cleanup stuff")
 	cam.release()
 	cv2.destroyAllWindows()
+	print("user id = " + id)
 
-	return id #id가 unknown이면 등록된 사용자x //주의!!!!
+	return id
 
 
 # main
@@ -853,32 +871,29 @@ while True:
 		tts = gTTS("회원가입을 하시려면 일 , 로그인을 하시려면 이 를 말해주세요.", lang='ko', slow=False)
 		tts.save('./music/menu_sel.mp3')
 		os.system("omxplayer ./music/menu_sel.mp3")
-
-		menu = voiceinput()
+		menu = "이"
+		#menu = voiceinput()
 		if(menu == "일"):
-			tts = gTTS("회원가입을 시작합니다.", lang='ko', slow=False)
-			tts.save('./music/signup.mp3')
-			os.system("omxplayer ./music/signup.mp3")
-			tts = gTTS("보드 앞에 정면을 보고 앉아주세요.", lang='ko', slow=False)
-			tts.save("./music/step1")
+			#tts = gTTS("회원가입을 시작합니다.", lang='ko', slow=False)
+			#tts.save('./music/signup.mp3')
+			os.system("omxplayer ./music/signup.mp3") #회원가입을 시작합니다.
+			#tts = gTTS("보드 앞에 정면을 보고 앉아주세요.", lang='ko', slow=False)
+			#tts.save("./music/step1")
 			os.system("omxplayer ./music/step1")
-			tts = gTTS("얼굴을 등록하는 중입니다.", lang='ko', slow=False)
-			tts.save("./music/step2")
-			os.system("omxplayer ./music/step2")
+			#tts = gTTS("얼굴을 등록하는 중입니다.", lang='ko', slow=False)
+			#tts.save("./music/step2")
+			os.system("omxplayer ./music/step2") #얼굴을 등록하는 중입니다.
 			face_dataset()
 			face_training()
-			tts = gTTS("얼굴 등록이 완료되었습니다.", lang='ko', slow=False)
-			tts.save("./music/step2")
-			os.system("omxplayer ./music/step2")
+			os.system("omxplayer ./music/step2") #얼굴 등록이 완료되었습니다.
 
 		elif(menu == "이"):
 			# 얼굴 인식
-			os.system("omxplayer ./music/face_recog.mp3") # 얼꿀 인식을 시작합니다.
+			os.system("omxplayer ./music/face_recog.mp3") # 얼굴 인식을 시작합니다.
 			print("얼굴 인식 시작")
 
 			prtid = face_recognition()
-			print(prtid)
-			prtid = "User 1"
+			print("prtid = " + prtid)
 
 			if(prtid != "unknown"):
 				# 로그인 성공
