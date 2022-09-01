@@ -14,8 +14,7 @@ GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings (False)
 
 Row = [19,21,23,29,31,33,35,37]
-Col = [22, 24, 26, 32, 36, 38, 40]
-Col2 = [7,11,13,15]
+Col = [22, 24, 26, 32, 36, 38, 8]
 
 han1 = ['ㄱ','ㄴ','ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
 han2 = ['ㅏ', 'ㅑ', 'ㅓ', 'ㅕ', 'ㅗ', 'ㅛ', 'ㅜ', 'ㅠ', 'ㅡ', 'ㅣ', 'ㅐ', 'ㅒ', 'ㅔ', 'ㅖ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅢ']
@@ -23,14 +22,14 @@ han3 = ['ㄲ','ㄸ','ㅃ', 'ㅆ', 'ㅉ', ' ']
 eng1=['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
 Q = '사과 ', '하늘 ', '비행기 ', '우리나라 ', '안녕 ', '만나서 반가워 '
-Q2 = 'apple', 'sky', 'airplane', 'korea', 'hello', 'nice to meet you'
+Q1 = 'apple ', 'sky ' #, 'airplane ', 'korea ', 'hello ', 'nice to meet you '
 
 text=[]
 
 count = 0
 count1 = 0
 
-sound = ' ' #한글 영어
+sound = '한글' #한글 영어
 
 jcnt = 0
 
@@ -39,7 +38,7 @@ for i in range(8):
 for i in range(7):
         GPIO.setup(Col[i], GPIO.IN)
 for i in range(4):
-	GPIO.setup(Col2[i], GPIO.IN)
+		GPIO.setup(Col2[i], GPIO.IN)
 
 def KeyScan():
 	key_scan_line = [0,1,1,1,1,1,1,1]
@@ -62,13 +61,13 @@ def KeyScan():
 		time.sleep(0.000001)
 		# 키 매트릭스의 열 값 취득
         	# col
-		getPinData[0] = GPIO.input(Col[0])
-		getPinData[1] = GPIO.input(Col[1])
-		getPinData[2] = GPIO.input(Col[2])
-		getPinData[3] = GPIO.input(Col[3])
-		getPinData[4] = GPIO.input(Col[4])
-		getPinData[5] = GPIO.input(Col[5])
-		getPinData[6] = GPIO.input(Col[6])
+		getPinData[0] = not GPIO.input(Col[0])
+		getPinData[1] = not GPIO.input(Col[1])
+		getPinData[2] = not GPIO.input(Col[2])
+		getPinData[3] = not GPIO.input(Col[3])
+		getPinData[4] = not GPIO.input(Col[4])
+		getPinData[5] = not GPIO.input(Col[5])
+		getPinData[6] = not GPIO.input(Col[6])
 
 		if (getPinData[0]!=0 or getPinData[1]!=0 or getPinData[2]!=0 or getPinData[3]!=0 or getPinData[4]!=0 or getPinData[5]!=0 or getPinData[6]!=0):
 			if (getPinData[0]==1 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0):
@@ -123,10 +122,10 @@ def KeyScanEng():
 		time.sleep(0.000001)
 		# 키 매트릭스의 열 값 취득
         	# col
-		getPinData[0] = GPIO.input(Col[0])
-		getPinData[1] = GPIO.input(Col[1])
-		getPinData[2] = GPIO.input(Col[2])
-		getPinData[3] = GPIO.input(Col[3])
+		getPinData[0] = not GPIO.input(Col[0])
+		getPinData[1] = not GPIO.input(Col[1])
+		getPinData[2] = not GPIO.input(Col[2])
+		getPinData[3] = not GPIO.input(Col[3])
 
 		if (getPinData[0]!=0 or getPinData[1]!=0 or getPinData[2]!=0 or getPinData[3]!=0):
 			if (getPinData[0]==1 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0):
@@ -386,83 +385,257 @@ def mode3(a):
 		tts.save('ex_ko.mp3')
 		os.system("omxplayer ex_ko.mp3")
 
+def abc(num=0):
+	global oute
+	if(num>=1 and num<27):
+        	oute = eng1[num-1]
+	elif(num == 30):
+		print("mode1")
+	elif(num == 31):
+		print("mode2")
+	elif(num == 32):
+		print("mode3")
+	else:
+		oute = ' '
+	print(oute)
+	return oute
+
+def mode4(a): #알파벳 모드1
+	text=a
+	merge_jamo=join_jamos(text)
+	print(merge_jamo)
+
+	tts = gTTS(merge_jamo, lang='en', slow=False)
+	tts.save('ex_en.mp3')
+	os.system("omxplayer ex_en.mp3")
+
+def mode5(a): #알파벳 모드2
+	text.append(a)
+	if (count1 == 28):
+		del text[-1]
+		del text[-1]
+
+	merge_jamo=join_jamos(text)
+	print(merge_jamo)
+	if(count1 == 29):
+		tts = gTTS(merge_jamo, lang='en', slow=False)
+		tts.save('ex_en.mp3')
+		os.system("omxplayer ex_en.mp3")
+		text.clear()
+
+def mode6(a): #알파벳 모드3
+	global A
+	text.append(a)
+	if (count1 == 28):
+		del text[-1]
+		del text[-1]
+
+	merge_jamo=join_jamos(text)
+	print(merge_jamo)
+	if(count1 == 29):
+		tts = gTTS(merge_jamo, lang='en', slow=False)
+		tts.save('ex_en.mp3')
+		os.system("omxplayer ex_en.mp3")
+		text.clear()
+
+		print('정답 비교'+A)
+		if (A==merge_jamo):
+			os.system("omxplayer ooo.mp3")
+			#os.system("gtts-cli '정답입니다 ' -l ko --output ko_o.mp3")
+			#os.system("omxplayer ko_o.mp3")
+		else:
+			os.system("omxplayer xxx.mp3")
+			#os.system("gtts-cli '틀렸습니다. ' -l ko --output ko_x.mp3")
+			#os.system("omxplayer ko_x.mp3")
+		A = random.choice(Q1)
+
+		print('문제'+A)
+		#tts = gTTS('문제', lang='ko', slow=False)
+		#tts.save('question.mp3')
+		os.system("omxplayer question.mp3")
+
+		tts = gTTS(A, lang='en', slow=False)
+		tts.save('ex_en.mp3')
+		os.system("omxplayer ex_en.mp3")
 
 # main
 tts=gTTS("언어를 선택하세요. 한글, 영어", lang='ko', slow=False)
 tts.save('lan.mp3')
 os.system("omxplayer lan.mp3")
 
-
-
-#tts=gTTS("모드를 선택해주세요.", lang='ko', slow=False)
-#tts.save('mode_sel.mp3')
-#os.system("omxplayer mode_sel.mp3")
-
-while True :
-
+while True:
 	try:
 		if(sound == '한글'):
-		if(count==54):
-			#tts = gTTS("모드 일번 입니다. 자음, 모음을 입력해주세요.", lang='ko', slow=False)
-			#tts.save('mode_1.mp3')
-			os.system("omxplayer mode_1.mp3")
-			while True:
-				out2 = count
-				count = KeyScan()
-				time.sleep(0.5)
-				#count = int(input())
-				if(count == 54 or count == 55 or count == 56):
-					break
-				elif (str(type(count)) == "<class 'int'>"):
-					mode1(hangul(count))
+			tts=gTTS("현재 모드 한글", lang='ko', slow=False)
+			tts.save('mode_kor.mp3')
+			os.system("omxplayer mode_kor.mp3")
 
-				else:
-					print("error")
-		elif(count==55):
-			#tts = gTTS("모드 이번 입니다. 단어 또는 문장을 입력해주세요. ", lang='ko', slow=False)
-			#tts.save('mode_2.mp3')
-			os.system("omxplayer mode_2.mp3")
-			while True:
-				count = KeyScan()
-				time.sleep(0.5)
-				#count = int(input())
-				if(count == 54 or count == 55 or count == 56):
-					text.clear()
-					break
-				elif (str(type(count)) == "<class 'int'>"):
-					mode2(hangul(count))
-
-				else:
-					print("error")
-		elif(count==56): # mode3
-			#tts = gTTS("모드 삼번 입니다. 문제", lang='ko', slow=False)
-			#tts.save('mode_3.mp3')
-			os.system("omxplayer mode_3.mp3")
-
-			A = random.choice(Q)
-
-			print('_'+A+'_')
-
-			tts = gTTS(A, lang='ko', slow=False)
-			tts.save('ex_ko.mp3')
-			os.system("omxplayer ex_ko.mp3")
+			count = 0
+			count1 = 0
+			#tts=gTTS("모드를 선택해주세요.", lang='ko', slow=False)
+			#tts.save('mode_sel.mp3')
+			os.system("omxplayer mode_sel.mp3")
 
 			while True:
-				count = KeyScan()
-				time.sleep(0.5)
-				#count = int(input())
-				if(count==54 or count==55 or count==56):
-					text.clear()
-					break
-				elif (str(type(count)) == "<class 'int'>"):
-					mode3(hangul(count))
+				if(count==54):
+					#tts = gTTS("모드 일번 입니다. 자음, 모음을 입력해주세요.", lang='ko', slow=False)
+					#tts.save('mode_1.mp3')
+					os.system("omxplayer mode_1.mp3")
+					while True:
+						out2 = count
+						count = KeyScan() #count = int(input())
+						time.sleep(0.5)
+						if(count == 54 or count == 55 or count == 56):
+							break
+						elif((count == 53 and (not join_jamos(text).strip()))):
+							os.system("omxplayer mode_sel.mp3")
+							break
+						elif (str(type(count)) == "<class 'int'>"):
+							mode1(hangul(count))
+						else:
+							print("error")
+				elif(count==55):
+					#tts = gTTS("모드 이번 입니다. 단어 또는 문장을 입력해주세요. ", lang='ko', slow=False)
+					#tts.save('mode_2.mp3')
+					os.system("omxplayer mode_2.mp3")
+					while True:
+						count = KeyScan() #count = int(input())
+						time.sleep(0.5)
+						if(count == 54 or count == 55 or count == 56):
+							text.clear()
+							break
+						elif((count == 53 and (not join_jamos(text).strip()))):
+							os.system("omxplayer mode_sel.mp3")
+							break
+						elif (str(type(count)) == "<class 'int'>"):
+							mode2(hangul(count))
+
+						else:
+							print("error")
+				elif(count==56): # mode3
+					#tts = gTTS("모드 삼번 입니다. 문제", lang='ko', slow=False)
+					#tts.save('mode_3.mp3')
+					os.system("omxplayer mode_3.mp3")
+
+					A = random.choice(Q)
+
+					print('_'+A+'_')
+
+					tts = gTTS(A, lang='ko', slow=False)
+					tts.save('ex_ko.mp3')
+					os.system("omxplayer ex_ko.mp3")
+
+					while True:
+						count = KeyScan() #count = int(input())
+						time.sleep(0.5)
+						if(count==54 or count==55 or count==56):
+							text.clear()
+							break
+						elif((count == 53 and (not join_jamos(text).strip()))):
+							os.system("omxplayer mode_sel.mp3")
+							break
+
+						elif (str(type(count)) == "<class 'int'>"):
+							mode3(hangul(count))
+						else:
+							print("error")
 				else:
-					print("error")
+					count = KeyScan() #count = int(input())
+					print(count)
+					if(count == 53):
+						sound = '1'
+						break
+					time.sleep(0.5)
+		elif(sound == '영어'): #카운트 바꾸기
+			tts=gTTS("현재 모드 영어", lang='ko', slow=False)
+			tts.save('mode_eng.mp3')
+			os.system("omxplayer mode_eng.mp3")
+			count = 0
+			count1 = 0
+			# tts=gTTS("모드를 선택해주세요.", lang='ko', slow=False)
+			# tts.save('mode_sel.mp3')
+			os.system("omxplayer mode_sel.mp3")
+
+			while True:
+				if (count1 == 30):
+					tts = gTTS("모드 일번 입니다. 알파벳을 입력해주세요.", lang='ko', slow=False)
+					tts.save('mode_4.mp3')
+					os.system("omxplayer mode_4.mp3")
+					while True:
+						out2 = count1
+						count1 = KeyScan() # count1 = int(input())
+						time.sleep(0.5)
+						if (count1 == 30 or count1 == 31 or count1 == 32):
+							break
+						elif((count1 == 29 and (not join_jamos(text).strip()))):
+							os.system("omxplayer mode_sel.mp3")
+							break
+						elif (str(type(count1)) == "<class 'int'>"):
+							mode4(abc(count1))
+						else:
+							print("error")
+				elif (count1 == 31):
+					tts = gTTS("모드 이번 입니다. 단어 또는 문장을 입력해주세요. ", lang='ko', slow=False)
+					tts.save('mode_5.mp3')
+					os.system("omxplayer mode_5.mp3")
+					while True:
+						count1 = KeyScan() # count = int(input())
+						time.sleep(0.5)
+						if (count1 == 30 or count1 == 31 or count1 == 32):
+							text.clear()
+							break
+						elif((count1 == 29 and (not join_jamos(text).strip()))):
+							os.system("omxplayer mode_sel.mp3")
+							break
+						elif (str(type(count1)) == "<class 'int'>"):
+							mode5(abc(count1))
+
+						else:
+							print("error")
+				elif (count1 == 32):  # mode3
+					tts = gTTS("모드 삼번 입니다. 문제", lang='ko', slow=False)
+					tts.save('mode_6.mp3')
+					os.system("omxplayer mode_6.mp3")
+
+					A = random.choice(Q1)
+
+					print('_' + A + '_')
+
+					tts = gTTS(A, lang='en', slow=False)
+					tts.save('ex_en.mp3')
+					os.system("omxplayer ex_en.mp3")
+
+					while True:
+						count1 = KeyScan() # count1 = int(input())
+						time.sleep(0.5)
+						if (count1 == 30 or count1 == 31 or count1 == 32):
+							text.clear()
+							break
+						elif((count1 == 29 and (not join_jamos(text).strip()))):
+							os.system("omxplayer mode_sel.mp3")
+							break
+						elif (str(type(count1)) == "<class 'int'>"):
+							mode6(abc(count1))
+						else:
+							print("error")
+				else:
+					count1 = KeyScan() # count1 = int(input())
+					print(count1)
+					if(count1 == 29):
+						sound = '2'
+						break
+					time.sleep(0.5)
+
 		else:
-			count = KeyScan()
-			print(count)
-			time.sleep(0.5)
-			#count = int(input())
+			# 언어 선택
+			#tts = gTTS("언어를 선택하세요. 한글, 영어", lang='ko', slow=False)
+			#tts.save('lan.mp3')
+			os.system("omxplayer lan.mp3")
+			print('언어 선택')
+			if(sound == '1'):
+				sound = '영어'
+			else:
+				sound = '한글'
 
 	except KeyboardInterrupt:
 		# Ctrl + C
@@ -472,6 +645,5 @@ while True :
 		print('error')
 		#tts = gTTS("아무것도 입력되지 않았습니다.  모드를 다시 선택해주세요", lang='ko', slow=False)
 		#tts.save('mode_error.mp3')
-		os.system("omxplayer mode_error.mp3")
-
+		#os.system("omxplayer mode_error.mp3")
 		pass
