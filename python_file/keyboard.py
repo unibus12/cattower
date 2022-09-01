@@ -12,12 +12,12 @@ __author__ = 'info-lab'
 GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings (False)
 
-Row = [29, 31, 33, 35, 37]
-Col = [12, 16, 18, 22, 24, 26, 32, 36, 38, 40]
-sp = 3
-bsp = 5
-ok = 7
-bnt = [11, 13, 15]
+Row = [19,21,23,29,31,33,35,37]
+Col = [22, 24, 26, 32, 36, 38, 40]
+#sp = 3
+#bsp = 5
+#ok = 7
+#bnt = [11, 13, 15]
 
 han1 = ['ㄱ','ㄴ','ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
 han2 = ['ㅏ', 'ㅑ', 'ㅓ', 'ㅕ', 'ㅗ', 'ㅛ', 'ㅜ', 'ㅠ', 'ㅡ', 'ㅣ', 'ㅐ', 'ㅒ', 'ㅔ', 'ㅖ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅢ']
@@ -31,29 +31,29 @@ count = 0
 
 jcnt = 0
 
-for i in range(5):
+for i in range(8):
         GPIO.setup(Row[i], GPIO.OUT)
-for i in range(10):
+for i in range(7):
         GPIO.setup(Col[i], GPIO.IN)
 
-GPIO.setup(sp, GPIO.IN)
-GPIO.setup(bsp, GPIO.IN)
-GPIO.setup(ok, GPIO.IN)
-GPIO.setup(bnt[0], GPIO.IN)
-GPIO.setup(bnt[1], GPIO.IN)
-GPIO.setup(bnt[2], GPIO.IN)
+#GPIO.setup(sp, GPIO.IN)
+#GPIO.setup(bsp, GPIO.IN)
+#GPIO.setup(ok, GPIO.IN)
+#GPIO.setup(bnt[0], GPIO.IN)
+#GPIO.setup(bnt[1], GPIO.IN)
+#GPIO.setup(bnt[2], GPIO.IN)
 
 def KeyScan():
 	# 상위 니블을 스위칭하면서 출력
 	# Init_data, PORTC의 상위 니블의 출력 값
-	key_scan_line = [1,1,1,1,0]
+	key_scan_line = [1,1,1,1,1,1,1,0]
 	#키 스캔 라인 변경을 위한 반복문 인자, 키 매트릭스 열의 입력 값
 	key_scan_loop = 0
-	getPinData = [0,0,0,0,0,0,0,0,0,0]
+	getPinData = [0,0,0,0,0,0,0]
 	key_num = 0 # 실제 눌린 키 매트릭스 값
 
 	#키 스캔 반복문
-	for key_scan_loop in range(5):
+	for key_scan_loop in range(8):
         	# 키 매트릭스의 스캔 라인 설정 출력 값
         	# row
 		GPIO.output(Row[0], key_scan_line[0])
@@ -61,6 +61,9 @@ def KeyScan():
 		GPIO.output(Row[2], key_scan_line[2])
 		GPIO.output(Row[3], key_scan_line[3])
 		GPIO.output(Row[4], key_scan_line[4])
+		GPIO.output(Row[5], key_scan_line[5])
+		GPIO.output(Row[6], key_scan_line[6])
+		GPIO.output(Row[7], key_scan_line[7])
 		time.sleep(0.000001)
 		# 키 매트릭스의 열 값 취득
         	# C 포트의 하위 니블 값, 74LS14 사용으로 입력 신호가 반전되어 들어옴 // col
@@ -71,46 +74,42 @@ def KeyScan():
 		getPinData[4] = GPIO.input(Col[4])
 		getPinData[5] = GPIO.input(Col[5])
 		getPinData[6] = GPIO.input(Col[6])
-		getPinData[7] = GPIO.input(Col[7])
-		getPinData[8] = GPIO.input(Col[8])
-		getPinData[9] = GPIO.input(Col[9])
 
-		if (getPinData[0]!=0 or getPinData[1]!=0 or getPinData[2]!=0 or getPinData[3]!=0 or getPinData[4]!=0 or getPinData[5]!=0 or getPinData[6]!=0 or getPinData[7]!=0 or getPinData[8]!=0 or getPinData[9]!=0):
-			if (getPinData[0]==1 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0 and getPinData[7]==0 and getPinData[8]==0 and getPinData[9]==0):
-				key_num = key_scan_loop*9 + 1
+		if (getPinData[0]!=0 or getPinData[1]!=0 or getPinData[2]!=0 or getPinData[3]!=0 or getPinData[4]!=0 or getPinData[5]!=0 or getPinData[6]!=0):
+			if (getPinData[0]==1 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0):
+				key_num = key_scan_loop*6 + 1
                                 # 입력의 반전된 값
-                        	# 현재 count 값에 9를 곱한 후
+                        	# 현재 count 값에 6를 곱한 후
                         	# 숫자를 더하고 key_num 변수에 저장
-			elif (getPinData[0]==0 and getPinData[1]==1 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0 and getPinData[7]==0 and getPinData[8]==0 and getPinData[9]==0):
-				key_num = key_scan_loop*9 + 2
-			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==1 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0 and getPinData[7]==0 and getPinData[8]==0 and getPinData[9]==0):
-				key_num = key_scan_loop*9 + 3
-			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==1 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0 and getPinData[7]==0 and getPinData[8]==0 and getPinData[9]==0):
-				key_num = key_scan_loop*9 + 4
-			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==1 and getPinData[5]==0 and getPinData[6]==0 and getPinData[7]==0 and getPinData[8]==0 and getPinData[9]==0):
-				key_num = key_scan_loop*9 + 5
-			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==1 and getPinData[6]==0 and getPinData[7]==0 and getPinData[8]==0 and getPinData[9]==0):
-				key_num = key_scan_loop*9 + 6
-			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==1 and getPinData[7]==0 and getPinData[8]==0 and getPinData[9]==0):
-				key_num = key_scan_loop*9 + 7
-			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0 and getPinData[7]==1 and getPinData[8]==0 and getPinData[9]==0):
-				key_num = key_scan_loop*9 + 8
-			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0 and getPinData[7]==0 and getPinData[8]==1 and getPinData[9]==0):
-				key_num = key_scan_loop*9 + 9
-			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0 and getPinData[7]==0 and getPinData[8]==0 and getPinData[9]==1):
-				key_num = key_scan_loop*9 + 10
-			#print(key_num)
+			elif (getPinData[0]==0 and getPinData[1]==1 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0):
+				key_num = key_scan_loop*6 + 2
+			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==1 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0):
+				key_num = key_scan_loop*6 + 3
+			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==1 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==0):
+				key_num = key_scan_loop*6 + 4
+			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==1 and getPinData[5]==0 and getPinData[6]==0):
+				key_num = key_scan_loop*6 + 5
+			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==1 and getPinData[6]==0):
+				key_num = key_scan_loop*6 + 6
+			elif (getPinData[0]==0 and getPinData[1]==0 and getPinData[2]==0 and getPinData[3]==0 and getPinData[4]==0 and getPinData[5]==0 and getPinData[6]==1):
+				key_num = key_scan_loop*6 + 7
+			
+			print(key_num)
 			return key_num
+
         	#key_scan_line 값을 순차적으로 1비트씩 총 3회 시프트함
 		key_scan_line[0] = key_scan_line[1]
 		key_scan_line[1] = key_scan_line[2]
 		key_scan_line[2] = key_scan_line[3]
 		key_scan_line[3] = key_scan_line[4]
+		key_scan_line[4] = key_scan_line[5]
+		key_scan_line[5] = key_scan_line[6]
+		key_scan_line[6] = key_scan_line[7]
 
-		if (key_scan_loop == 4):
-			key_scan_line[4] = 0
+		if (key_scan_loop == 7):
+			key_scan_line[7] = 0
 		else:
-			key_scan_line[4] = 1
+			key_scan_line[7] = 1
 
 def hangul(num=0):
 	global out1
