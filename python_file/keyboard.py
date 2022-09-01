@@ -32,7 +32,7 @@ text=[]
 count = 0
 count1 = 0
 
-sound = ' ' #한글 영어
+sound = '한글' #한글 영어
 
 jcnt = 0
 
@@ -46,6 +46,9 @@ wordarr =[]
 ansarr =[]
 
 n = 0
+
+conn=pymysql.connect(host='localhost', user='root', password='1234', db='mydb', charset='utf8')
+cur=conn.cursor()
 
 
 for i in range(8):
@@ -162,6 +165,47 @@ def KeyScanEng():
 			key_scan_line[0] = 0
 		else:
 			key_scan_line[0] = 1
+
+def percent():
+	global n
+	n=0
+	kor1=eng1=0
+	conn=pymysql.connect(host='localhost', user='root', password='1234', db='mydb', charset='utf8')
+	cur=conn.cursor()
+	cur.execute('select ans from tblRegister')
+	rows = cur.fetchall()
+	ansarr.clear()
+
+	for row in rows:
+		ansarr.append(row[0])
+
+	for i in ansarr:
+		if(n<12 and ansarr[n]=='y'):
+			kor1 = kor1+1
+		#elif(n>=4 and n<8 and ansarr[n]=='y'):
+		#	kor2 = kor2+1
+		#elif(n>=8 and n<12 and ansarr[n]=='y'):
+		#	kor3 = kor3+1
+
+		elif(n>=12 and ansarr[n]=='y'):
+			eng1 = eng1+1
+		#elif(n>=16 and n<20 and ansarr[n]=='y'):
+		#	eng2 = eng2+1
+		#elif(n>=20 and ansarr[n]=='y'):
+		#	eng3 = eng3+1
+		n=n+1
+	return kor1, eng1
+
+
+
+def answer(str1):
+	conn=pymysql.connect(host='localhost', user='root', password='1234', db='mydb', charset='utf8')
+	cur=conn.cursor()
+	cur.execute("update tblRegister set ans = 'y' where word = '" + str1 +"';")
+	conn.commit()
+
+
+
 
 def hangul(num=0):
 	global out1
@@ -467,6 +511,9 @@ def mode6(a): #알파벳 모드3
 
 		print('정답 비교'+A)
 		if (A==merge_jamo):
+			answer(merge_jamo)
+			conn=pymysql.connect(host='localhost', user='root', password='1234', db='mydb', charset='utf8')
+			cur=conn.cursor()
 			cur.execute("update tblRegister set ans = 'y' where word = '" + A + "';")
 			conn.commit()
 			os.system("omxplayer ooo.mp3")
@@ -481,6 +528,8 @@ def mode6(a): #알파벳 모드3
 
 		A = maria_set()
 		#A = random.choice(Q1)
+		kor1, eng1 = percent()
+		print(eng1) # 0~100:1 step, 100~200:2 step, 200~300:3 step
 
 		print('문제'+A)
 		#tts = gTTS('문제', lang='ko', slow=False)
@@ -493,7 +542,7 @@ def mode6(a): #알파벳 모드3
 
 
 def maria_set():
-	global n
+	global n, A #, cur, conn
 	n=0
 	conn=pymysql.connect(host='localhost', user='root', password='1234', db='mydb', charset='utf8')
 	cur=conn.cursor()
@@ -507,69 +556,40 @@ def maria_set():
 		ansarr.append(row[2])
 
 	if(sound == '한글'):
-		for i in ansarr[0:12]:
-			if(steparr[n]=='1' and ansarr[n]=='n'):
-				return wordarr[n] #print(wordarr[n]) # 단어 출력해줌
+		for i in range(0,12):
+			print("i=", i)
+			print('st, wo, ans = ', steparr[i], wordarr[i], ansarr[i])
+
+			if(steparr[i]==1 and ansarr[i]=='n'):
+				return wordarr[i] # 단어 출력해줌
 			else:
-				if(steparr[n]=='2' and ansarr[n]=='n'):
-					return wordarr[n]
+				if(steparr[i]==2 and ansarr[i]=='n'):
+					return wordarr[i]
 				else:
-					if(steparr[n]=='3' and ansarr[n]=='n'):
-						return wordarr[n]
-					else:
-						cur.execute("update tblRegister set ans = 'n';")
-						conn.commit()
-						return wordarr[0]
-			n=n+1
+					if(steparr[i]==3 and ansarr[i]=='n'):
+						return wordarr[i]
+
+		cur.execute("update tblRegister set ans = 'n';")
+		conn.commit()
+		return wordarr[0]
 
 	if(sound == '영어'):
-		if(n==0):
-			n = 12
-		for i in ansarr[12:]:
-			if(steparr[n]=='1' and ansarr[n]=='n'):
-				return wordarr[n] #print(wordarr[n]) # 단어 출력해줌
+		for i in range(12,24):
+			print("i=", i)
+			print('st, wo, ans = ', steparr[i], wordarr[i], ansarr[i])
+
+			if(steparr[i]==1 and ansarr[i]=='n'):
+				return wordarr[i] # 단어 출력해줌
 			else:
-				if(steparr[n]=='2' and ansarr[n]=='n'):
-					return wordarr[n]
+				if(steparr[i]==2 and ansarr[i]=='n'):
+					return wordarr[i]
 				else:
-					if(steparr[n]=='3' and ansarr[n]=='n'):
-						return wordarr[n]
-					else:
-						cur.execute("update tblRegister set ans = 'n';")
-						conn.commit()
-						return wordarr[12]
-			n=n+1
+					if(steparr[i]==3 and ansarr[i]=='n'):
+						return wordarr[i]
 
-def percent():
-	global n
-	n=0
-	kor1=eng1=0
-	conn=pymysql.connect(host='localhost', user='root', password='1234', db='mydb', charset='utf8')
-	cur=conn.cursor()
-	cur.execute('select ans from tblRegister')
-	rows = cur.fetchall()
-	ansarr.clear()
-
-	for row in rows:
-		ansarr.append(row[0])
-
-	for i in ansarr:
-		if(n<12 and ansarr[n]=='y'):
-			kor1 = kor1+1
-		#elif(n>=4 and n<8 and ansarr[n]=='y'):
-		#	kor2 = kor2+1
-		#elif(n>=8 and n<12 and ansarr[n]=='y'):
-		#	kor3 = kor3+1
-
-		elif(n>=12 and ansarr[n]=='y'):
-			eng1 = eng1+1
-		#elif(n>=16 and n<20 and ansarr[n]=='y'):
-		#	eng2 = eng2+1
-		#elif(n>=20 and ansarr[n]=='y'):
-		#	eng3 = eng3+1
-		n=n+1
-	return kor1*25, eng1*25
-
+		cur.execute("update tblRegister set ans = 'n';")
+		conn.commit()
+		return wordarr[12]
 
 
 # main
@@ -745,7 +765,7 @@ while True:
 			os.system("omxplayer lan.mp3")
 			print('언어 선택')
 
-			sound = voiceinput()
+			#sound = voiceinput()
 			print(sound)
 			'''
 			if(sound == voiceinput()):
@@ -753,6 +773,9 @@ while True:
 			else:
 				sound = '한글'
 			'''
+
+			if(count==53):
+				sound = '영어'
 
 	except KeyboardInterrupt:
 		# Ctrl + C
