@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.smartboard">
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/keymain"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SmartBoard">
+
+        <service
+            android:name=".MyService"
+            android:enabled="true"
+            android:exported="true"></service>
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".EngActivity"
+            android:label="Eng" />
+        <activity
+            android:name=".HanActivity"
+            android:label="Han" />
+        <activity
+            android:name=".ManageActivity"
+            android:label="Manage" />
+        <activity
+            android:name=".MenuActivity"
+            android:label="Menu" />
+        <activity
+            android:name=".SignupActivity"
+            android:label="Signup" />
+        <activity
+            android:name=".ReturnActivity"
+            android:label="InputData" />
+        <activity
+            android:name=".ProgressActivity"
+            android:label="Progress" />
+    </application>
+
+</manifest>
