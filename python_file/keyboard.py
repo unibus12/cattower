@@ -1,21 +1,43 @@
 #-*-coding: utf-8-*-
 import RPi.GPIO as GPIO
-import time
+import os
+from gtts import gTTS
+from jamo import h2j, j2hcj
+from unicode import join_jamos
+
+__author__ = 'info-lab'
+
 GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings (False)
 
 Row = [29, 31, 33, 35, 37]
 Col = [12, 16, 18, 22, 24, 26, 32, 36, 38, 40]
+sp = 3
+bsp = 5
+ok = 7
+bnt = [11, 13, 15]
 
 han1 = ['ㄱ','ㄴ','ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
 han2 = ['ㅏ', 'ㅑ', 'ㅓ', 'ㅕ', 'ㅗ', 'ㅛ', 'ㅜ', 'ㅠ', 'ㅡ', 'ㅣ', 'ㅐ', 'ㅒ', 'ㅔ', 'ㅖ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅢ']
-han3 = ['ㄲ','ㄸ','ㅃ', 'ㅆ', 'ㅉ']
+han3 = ['ㄲ','ㄸ','ㅃ', 'ㅆ', 'ㅉ', ' ']
+
+text=[]
 
 count = 0
+
+jcnt = 0
+
 for i in range(5):
         GPIO.setup(Row[i], GPIO.OUT)
 for i in range(10):
         GPIO.setup(Col[i], GPIO.IN)
+
+GPIO.setup(sp, GPIO.IN)
+GPIO.setup(bsp, GPIO.IN)
+GPIO.setup(ok, GPIO.IN)
+GPIO.setup(bnt[0], GPIO.IN)
+GPIO.setup(bnt[1], GPIO.IN)
+GPIO.setup(bnt[2], GPIO.IN)
 
 def KeyScan():
 	# 상위 니블을 스위칭하면서 출력
@@ -87,9 +109,8 @@ def KeyScan():
 			key_scan_line[4] = 1
 
 def hangul(num=0):
-	if(num==0):
-		out1 = 'None'
-	elif(num>=1 and num<15):
+	global out1
+	if(num>=1 and num<15):
                 out1 = han1[num-1]
 	elif(num>=15 and num<36):
 		out1 = han2[num-15]
@@ -108,15 +129,164 @@ def hangul(num=0):
 			out1 = han3[4]
 		else:
 			out1 = 'error'
+	elif(num == 51 or num==52 or num==53):
+		out1 = han3[5]
+	elif(num == 54):
+		print("mode1")
+	elif(num == 55):
+		print("mode2")
+	elif(num == 56):
+		print("mode3")
 	else:
 		out1 = 'error'
 
 	print(out1)
+	return out1
 
-# 여기부터 main
+def mode1(a):
+	if(count!=55 or count!=56):
+		text=a
+		merge_jamo=join_jamos(text)
+		print(merge_jamo)
+
+		tts = gTTS(merge_jamo, lang='ko', slow=False)
+		tts.save('ex_ko.mp3')
+		os.system("omxplayer ex_ko.mp3")
+		if ((count >= 36 and count <= 49) or (out2 >= 36 and out2 <= 49 and count == 50)):
+			tts = gTTS("받 침", lang='ko', slow=False)
+			tts.save('ex_ko.mp3')
+			os.system("omxplayer ex_ko.mp3")
+
+def mode2(a):
+	global jcnt
+	text.append(a)
+	if(count == 54):
+		text.clear()
+	elif (count == 52):
+		del text[-1]
+		del text[-1]
+		if(jcnt>0):
+			jcnt=jcnt-1
+	elif (count==50):
+		del text[-2]
+
+	if ((count>= 1 and count<=14) or (count>=36 and count<=49)):
+		jcnt=jcnt+1
+	elif (count>=15 and count<=35):
+		if (jcnt==3):
+			if(text[-3]=='ㅅ' and text[-4]=='ㄱ'):
+				del text[-3]
+				del text[-3]
+				text.insert(-2,'ㄳ')
+			elif(text[-3]=='ㅈ' and text[-4]=='ㄴ'):
+				del text[-3]
+				del text[-3]
+				text.insert(-2,'ㄵ')
+			elif(text[-3]=='ㅎ' and text[-4]=='ㄴ'):
+				del text[-3]
+				del text[-3]
+				text.insert(-2,'ㄶ')
+			elif(text[-3]=='ㄱ' and text[-4]=='ㄹ'):
+				del text[-3]
+				del text[-3]
+				text.insert(-2,'ㄺ')
+			elif(text[-3]=='ㅁ' and text[-4]=='ㄹ'):
+				del text[-3]
+				del text[-3]
+				text.insert(-2,'ㄻ')
+			elif(text[-3]=='ㅂ' and text[-4]=='ㄹ'):
+				del text[-3]
+				del text[-3]
+				text.insert(-2,'ㄼ')
+			elif(text[-3]=='ㅅ' and text[-4]=='ㄹ'):
+				del text[-3]
+				del text[-3]
+				text.insert(-2,'ㄽ')
+			elif(text[-3]=='ㅌ' and text[-4]=='ㄹ'):
+				del text[-3]
+				del text[-3]
+				text.insert(-2,'ㄾ')
+			elif(text[-3]=='ㅍ' and text[-4]=='ㄹ'):
+				del text[-3]
+				del text[-3]
+				text.insert(-2,'ㄿ')
+			elif(text[-3]=='ㅎ' and text[-4]=='ㄹ'):
+				del text[-3]
+				del text[-3]
+				text.insert(-2,'ㅀ')
+			elif(text[-3]=='ㅅ' and text[-4]=='ㅂ'):
+				del text[-3]
+				del text[-3]
+				text.insert(-2,'ㅄ')
+		jcnt = 0
+
+	merge_jamo=join_jamos(text)
+	print(merge_jamo)
+	if(count == 53):
+		tts = gTTS(merge_jamo, lang='ko', slow=False)
+		tts.save('ex_ko.mp3')
+		os.system("omxplayer ex_ko.mp3")
+		text.clear()
+
+def mode3(a):
+	text.append(a)
+	if(count == 54):
+		text.clear()
+	elif (count == 52):
+		del text[-1]
+		del text[-1]
+	elif (count==50):
+		del text[-2]
+
+	merge_jamo=join_jamos(text)
+	print(merge_jamo)
+	if(count == 53):
+		tts = gTTS(merge_jamo, lang='ko', slow=False)
+		tts.save('ex_ko.mp3')
+		os.system("omxplayer ex_ko.mp3")
+		text.clear()
+
+# main
 while True :
-	count = KeyScan()
-	print(count)
-	if (str(type(count)) == "<class 'int'>"):
-		hangul(count)
-	time.sleep(1)
+	if(count==54):
+		tts = gTTS("모드 일번 입니다.", lang='ko', slow=False)
+		tts.save('ex_ko.mp3')
+		os.system("omxplayer ex_ko.mp3")
+		while True:
+			out2 = count
+			count=int(input())
+			if(count == 55 or count == 56):
+				break
+			elif (str(type(count)) == "<class 'int'>"):
+				mode1(hangul(count))
+
+			else:
+				print("error")
+	elif(count==55):
+		tts = gTTS("모드 이번 입니다.", lang='ko', slow=False)
+		tts.save('ex_ko.mp3')
+		os.system("omxplayer ex_ko.mp3")
+		while True:
+			count=int(input())
+			if(count == 54 or count == 56):
+				break
+			elif (str(type(count)) == "<class 'int'>"):
+				mode2(hangul(count))
+
+			else:
+				print("error")
+	elif(count==56): # mode3
+		tts = gTTS("모드 삼번 입니다.", lang='ko', slow=False)
+		tts.save('ex_ko.mp3')
+		os.system("omxplayer ex_ko.mp3")
+		while True:
+			if(count==54 or count==55):
+				break
+			elif (str(type(count)) == "<class 'int'>"):
+				mode3(hangul(count))
+			else:
+				print("error")
+	else:
+		#count = KeyScan()
+		#print(count)
+		count = int(input())
