@@ -132,7 +132,7 @@ def hangul(num=0):
 		elif (out1 == 'ㅈ'):
 			out1 = han3[4]
 		else:
-			out1 = 'error'
+			out1 = ' ' # error
 	elif(num == 51 or num==52 or num==53):
 		out1 = han3[5]
 	elif(num == 54):
@@ -142,27 +142,30 @@ def hangul(num=0):
 	elif(num == 56):
 		print("mode3")
 	else:
-		out1 = 'error'
+		out1 = ' ' # error
 
 	print(out1)
 	return out1
 
 def mode1(a):
-	if(count!=55 or count!=56):
+	if(count!=23):
 		text=a
-		merge_jamo=join_jamos(text)
-		print(merge_jamo)
+	else:
+		text='으'
 
-		tts = gTTS(merge_jamo, lang='ko', slow=False)
+	merge_jamo=join_jamos(text)
+	print(merge_jamo)
+
+	tts = gTTS(merge_jamo, lang='ko', slow=False)
+	tts.save('ex_ko.mp3')
+	os.system("omxplayer ex_ko.mp3")
+	if ((count >= 36 and count <= 49) or ((out2 == 36 or out2 == 38 or out2 == 41 or out2 == 42 or out2 == 44) and count == 50)):
+		tts = gTTS("받 침", lang='ko', slow=False)
 		tts.save('ex_ko.mp3')
 		os.system("omxplayer ex_ko.mp3")
-		if ((count >= 36 and count <= 49) or (out2 >= 36 and out2 <= 49 and count == 50)):
-			tts = gTTS("받 침", lang='ko', slow=False)
-			tts.save('ex_ko.mp3')
-			os.system("omxplayer ex_ko.mp3")
 
 def mode2(a):
-	global jcnt
+	global jcnt, jcnt2
 	text.append(a)
 	if(count == 54):
 		text.clear()
@@ -171,9 +174,13 @@ def mode2(a):
 		del text[-1]
 		if(jcnt>0):
 			jcnt=jcnt-1
+		elif(jcnt2>0):
+			jcnt=jcnt2
+			jcnt2=0
 	elif (count==50):
+		if(text[-2]!='ㄴ' or text[-2]!='ㄹ' or text[-2]!='ㅁ' or text[-2]!='ㅇ' or text[-2]!='ㅊ' or text[-2]!='ㅋ' or text[-2]!='ㅌ' or text[-2]!='ㅍ' or text[-2]!='ㅎ'):
+			text.insert(-2,text[-2])
 		del text[-2]
-
 	if ((count>= 1 and count<=14) or (count>=36 and count<=49)):
 		jcnt=jcnt+1
 	elif (count>=15 and count<=35):
@@ -222,6 +229,7 @@ def mode2(a):
 				del text[-3]
 				del text[-3]
 				text.insert(-2,'ㅄ')
+		jcnt2 = jcnt
 		jcnt = 0
 
 	merge_jamo=join_jamos(text)
@@ -234,7 +242,7 @@ def mode2(a):
 		jcnt = 0
 
 def mode3(a):
-	global jcnt, A
+	global jcnt, A, jcnt2
 
 	text.append(a)
 	if(count == 54):
@@ -244,7 +252,12 @@ def mode3(a):
 		del text[-1]
 		if(jcnt>0):
 			jcnt=jcnt-1
+		elif(jcnt2>0):
+			jcnt=jcnt2
+			jcnt2=0
 	elif (count==50):
+		if(text[-2]!='ㄴ' or text[-2]!='ㄹ' or text[-2]!='ㅁ' or text[-2]!='ㅇ' or text[-2]!='ㅊ' or text[-2]!='ㅋ' or text[-2]!='ㅌ' or text[-2]!='ㅍ' or text[-2]!='ㅎ'):
+			text.insert(-2,text[-2])
 		del text[-2]
 
 	if ((count>= 1 and count<=14) or (count>=36 and count<=49)):
@@ -295,6 +308,7 @@ def mode3(a):
 				del text[-3]
 				del text[-3]
 				text.insert(-2,'ㅄ')
+		jcnt2 = jcnt
 		jcnt = 0
 
 	merge_jamo=join_jamos(text)
@@ -338,7 +352,7 @@ while True :
 			while True:
 				out2 = count
 				count=int(input())
-				if(count == 55 or count == 56):
+				if(count == 54 or count == 55 or count == 56):
 					break
 				elif (str(type(count)) == "<class 'int'>"):
 					mode1(hangul(count))
@@ -351,7 +365,8 @@ while True :
 			os.system("omxplayer ex_ko.mp3")
 			while True:
 				count=int(input())
-				if(count == 54 or count == 56):
+				if(count == 54 or count == 55 or count == 56):
+					text.clear()
 					break
 				elif (str(type(count)) == "<class 'int'>"):
 					mode2(hangul(count))
@@ -373,7 +388,8 @@ while True :
 
 			while True:
 				count=int(input())
-				if(count==54 or count==55):
+				if(count==54 or count==55 or count==56):
+					text.clear()
 					break
 				elif (str(type(count)) == "<class 'int'>"):
 					mode3(hangul(count))
