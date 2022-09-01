@@ -12,6 +12,8 @@ import speech_recognition as sr
 import cv2
 import numpy as np
 from PIL import Image
+import socket
+import threading
 
 __author__ = 'info-lab'
 
@@ -34,7 +36,7 @@ text=[]
 count = 0
 count1 = 0
 
-sound = '한글' #한글 영어
+sound = '1' #한글 영어
 
 jcnt = 0
 
@@ -61,6 +63,70 @@ for i in range(7):
         GPIO.setup(Col[i], GPIO.IN)
 
 face_detector = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+IP = ''
+PORT = 35000
+SIZE = 1024
+ADDR = (IP, PORT)
+msg = ''
+
+c_mode="한영"
+def server():
+	global prtid, count, sound, count1, c_mode, text
+	print("thread start")
+
+	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+		server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		server_socket.bind(ADDR)  # 주소 바인딩
+		server_socket.listen()  # 클라이언트의 요청을 받을 준비
+		client_socket, client_addr = server_socket.accept()  # 수신대기, 접속한 클라이언트 정보 (소켓, 주소) 반환
+		print("connected")
+	while (True):
+		msg = client_socket.recv(1024).decode()
+		if msg!="" :
+			print("[{}] massage : {}".format(client_addr, msg))
+			if(msg[:4]=="로그인,"):
+				msg_split=msg.split(',', 2)
+				print("id={}, pw={}".format(msg_split[1], msg_split[2]))
+				if(msg_split[1]=="" and msg_split[2]==''):
+					client_socket.sendall("로그인,ok".encode())
+					prtid="user 1"
+					print("로그인ok\n")
+				else:
+					print("로그인실패logfail\n")
+					client_socket.sendall("로그인,log_fail".encode())
+			if(msg=="얼굴로그인"):
+				prtid = face_recognition()
+				if(prtid=="unknown"):
+					client_socket.sendall("로그인,facelog_fail".encode())
+					print("로그인실패facelogfail")
+			if(msg=="한글"):
+				sound="한글"
+			if(msg=="영어"):
+				sound="영어"
+			if(msg=="한글,1"):
+				count=54
+			if(msg=="한글,2"):
+				count=55
+			if(msg=="한글,3"):
+				count=56
+			if(msg=="영어,1"):
+				count1=30
+			if(msg=="영어,2"):
+				count1=31
+			if(msg=="영어,3"):
+				count1=32
+			if(msg=="현재학습확인"):
+#				msg2=join_jamos(text)
+				msg2="a"
+				client_socket.sendall("현재학습확인,{},{}\r\n".format(c_mode,msg2).encode()) ###
+				print("message back to client : 현재학습확인,{},{}".format(c_mode,msg2))
+			if(msg[:2]=="정보"):
+				msg1, msg2 = percent()
+				client_socket.sendall("정보,{},{}\r\n".format(msg1,msg2).encode())
+				print("message back to client : 정보,{},{}".format(msg1,msg2))
+	client_socket.close()  # 클라이언트 소켓 종료
+
 
 def KeyScan():
 	key_scan_line = [0,1,1,1,1,1,1,1]
@@ -196,8 +262,6 @@ def answer(str1):
 	cur=conn.cursor()
 	cur.execute("update tblRegister set ans = 'y' where word = '" + str1 +"';")
 	conn.commit()
-
-
 
 
 def hangul(num=0):
@@ -344,7 +408,6 @@ def mode2(a):
 
 def mode3(a):
 	global jcnt, A, jcnt2
-
 	text.append(a)
 	if(count == 54):
 		text.clear()
@@ -575,13 +638,14 @@ def maria_set():
 		return wordarr[12]
 
 def han_mode():
-	global count, A, text
+	global count, A, text, c_mode
 	os.system("omxplayer ./music/mode_kor.mp3") # 현재 모드 한 그을
 	os.system("omxplayer ./music/mode_sel.mp3") # 모드를 선택해주세요.
 
 	count = 0
 	while True:
 		if(count==54): # mode1
+			c_mode="한글,1"
 			os.system("omxplayer ./music/mode_1.mp3") # 모드 일번 입니다. 자음, 모음을 입력해주세요.
 			while True:
 				out2 = count
@@ -597,6 +661,7 @@ def han_mode():
 				else:
 					pass
 		elif(count==55): # mode2
+			c_mode="한글,2"
 			os.system("omxplayer ./music/mode_2.mp3") # 모드 이번 입니다. 단어 또는 문장을 입력해주세요.
 			while True:
 				count = KeyScan() #count = int(input())
@@ -612,6 +677,7 @@ def han_mode():
 				else:
 					pass
 		elif(count==56): # mode3
+			c_mode="한글,3"
 			os.system("omxplayer ./music/mode_3.mp3") # 모드 삼번 입니다. 문제
 
 			A = maria_set()
@@ -644,13 +710,14 @@ def han_mode():
 			time.sleep(0.5)
 
 def eng_mode():
-	global count1, A, text
+	global count1, A, text, c_mode
 	os.system("omxplayer ./music/mode_eng.mp3") # 현재 모드 영 어
 	os.system("omxplayer ./music/mode_sel.mp3")
 	count1 = 0
 
 	while True:
 		if (count1 == 30):
+			c_mode="영어,1"
 			os.system("omxplayer ./music/mode_4.mp3") # 모드 일번 입니다. 알파벳을 입력해주세요.
 			while True:
 				out2 = count1
@@ -666,6 +733,7 @@ def eng_mode():
 				else:
 					pass
 		elif (count1 == 31):
+			c_mode="영어,2"
 			os.system("omxplayer ./music/mode_5.mp3") # 모드 이번 입니다. 단어 또는 문장을 입력해주세요.
 			while True:
 				count1 = KeyScanEng() # count = int(input())
@@ -681,7 +749,8 @@ def eng_mode():
 				else:
 					pass
 		elif (count1 == 32):  # mode3
-			os.system("omxplayer mode_6.mp3") # 모드 삼번 입니다. 문제
+			c_mode="영어,3"
+			os.system("omxplayer ./music/mode_6.mp3") # 모드 삼번 입니다. 문제
 			A = maria_set()
 			#A = random.choice(Q1)
 
@@ -851,7 +920,7 @@ def face_recognition():
 	percent_arr = np.array(percent)
 	Mean = round(np.mean(percent_arr))
 	print("mean = " + str(Mean))
-	if(Mean > 50):
+	if(Mean > 30):
 		pass
 	else:
 		id = "unknown"
@@ -864,6 +933,9 @@ def face_recognition():
 
 	return id
 
+
+t=threading.Thread(target=server)
+t.start()
 
 # main
 while True:
@@ -892,7 +964,7 @@ while True:
 			os.system("omxplayer ./music/face_recog.mp3") # 얼굴 인식을 시작합니다.
 			print("얼굴 인식 시작")
 
-			prtid = face_recognition()
+#			prtid = face_recognition()
 			print("prtid = " + prtid)
 
 			if(prtid != "unknown"):
@@ -913,6 +985,7 @@ while True:
 					# 언어 선택
 					os.system("omxplayer ./music/lan.mp3") # 언어를 선택하세요. 한글, 영어
 					print('언어 선택')
+					#time.sleep(2)
 					#sound = voiceinput()
 					print(sound)
 					if(count==53):
