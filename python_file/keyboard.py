@@ -9,7 +9,9 @@ from jamo import h2j, j2hcj
 from unicode import join_jamos
 import pymysql
 import speech_recognition as sr
-
+import cv2
+import numpy as np
+from PIL import Image
 
 __author__ = 'info-lab'
 
@@ -47,6 +49,8 @@ ansarr =[]
 
 n = 0
 
+user_name = []
+
 conn=pymysql.connect(host='localhost', user='root', password='1234', db='mydb', charset='utf8')
 cur=conn.cursor()
 
@@ -55,6 +59,8 @@ for i in range(8):
         GPIO.setup(Row[i], GPIO.OUT)
 for i in range(7):
         GPIO.setup(Col[i], GPIO.IN)
+
+face_detector = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 def KeyScan():
 	key_scan_line = [0,1,1,1,1,1,1,1]
@@ -592,190 +598,346 @@ def maria_set():
 		return wordarr[12]
 
 
+def face_dataset():
+	cam = cv2.VideoCapture(0)
+	cam.set(3, 640) # set video width
+	cam.set(4, 480) # set video height
+
+	# For each person, enter one numeric face id
+	#face_id = input('\n enter user id end press <return> ==>  ')
+	face_id = 1
+	while (os.path.exists("dataset/User." + str(face_id) + '.' + str(1) + ".jpg")):
+		print(face_id)
+		face_id += 1
+	print(face_id)
+	print("\n [INFO] Initializing face capture. Look the camera and wait ...")
+
+	# Initialize individual sampling face count
+	count = 0
+	while(True):
+		ret, img = cam.read()
+		#img = cv2.flip(img, -1) # flip video image vertically
+		gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+		faces = face_detector.detectMultiScale(gray, 1.3, 5)
+		for (x,y,w,h) in faces:
+			cv2.rectangle(img, (x,y), (x+w,y+h), (255,0,0), 2)
+			count += 1
+			# Save the captured image into the datasets folder
+			cv2.imwrite("dataset/User." + str(face_id) + '.' + str(count) + ".jpg", gray[y:y+h,x:x+w])
+			cv2.imshow('image', img)
+		k = cv2.waitKey(100) & 0xff # Press 'ESC' for exiting video
+		if k == 27:
+			break
+		elif count >= 60: # Take 60 face sample and stop video
+			break
+
+	# Do a bit of cleanup
+	print("\n [INFO] Exiting Program and cleanup stuff")
+	cam.release()
+	cv2.destroyAllWindows()
+
+# function to get the images and label data
+def getImagesAndLabels(path):
+	imagePaths = [os.path.join(path,f) for f in os.listdir(path)]
+	faceSamples=[]
+	ids = []
+	for imagePath in imagePaths:
+		PIL_img = Image.open(imagePath).convert('L') # convert it to grayscale
+		img_numpy = np.array(PIL_img,'uint8')
+		id = int(os.path.split(imagePath)[-1].split(".")[1])
+		faces = face_detector.detectMultiScale(img_numpy)
+		for (x,y,w,h) in faces:
+			faceSamples.append(img_numpy[y:y+h,x:x+w])
+			ids.append(id)
+	return faceSamples,ids
+
+
+def face_training():
+	# Path for face image database
+	path = 'dataset'
+	recognizer = cv2.face.LBPHFaceRecognizer_create()
+
+	print("\n [INFO] Training faces. It will take a few seconds. Wait ...")
+	faces,ids = getImagesAndLabels(path)
+	recognizer.train(faces, np.array(ids))
+
+	# Save the model into trainer/trainer.yml
+	recognizer.write('trainer/trainer.yml') # recognizer.save() worked on Mac, but not on Pi
+	# Print the numer of faces trained and end program
+	print("\n [INFO] {0} faces trained. Exiting Program".format(len(np.unique(ids))))
+
+
+def face_recognition():
+	recognizer = cv2.face.LBPHFaceRecognizer_create()
+	recognizer.read('trainer/trainer.yml')
+	cascadePath = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+	faceCascade = cv2.CascadeClassifier(cascadePath);
+	font = cv2.FONT_HERSHEY_SIMPLEX
+
+	#iniciate id counter
+	id = 0
+
+	# names related to ids: example ==> loze: id=1,  etc
+	# 이런식으로 사용자의 이름을 사용자 수만큼 추가해준다.
+	#names = ['None', 'kim', 'lee', 'jang']
+	face_id = 1
+	names = ['None']
+	while (os.path.exists("dataset/User." + str(face_id) + '.' + str(1) + ".jpg")):
+		print(face_id)
+		names.append("user " + str(face_id))
+		face_id += 1
+	print(names)
+
+	# Initialize and start realtime video capture
+	cam = cv2.VideoCapture(0)
+	cam.set(3, 640) # set video widht
+	cam.set(4, 480) # set video height
+
+	# Define min window size to be recognized as a face
+	minW = 0.1*cam.get(3)
+	minH = 0.1*cam.get(4)
+
+	while True:
+		ret, img =cam.read()
+		#img = cv2.flip(img, -1) # Flip vertically
+		gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+
+		faces = faceCascade.detectMultiScale(
+			gray,
+			scaleFactor = 1.2,
+			minNeighbors = 5,
+			minSize = (int(minW), int(minH)),
+			)
+
+		for(x,y,w,h) in faces:
+			cv2.rectangle(img, (x,y), (x+w,y+h), (0,255,0), 2)
+			id, confidence = recognizer.predict(gray[y:y+h,x:x+w])
+			# Check if confidence is less them 100 ==> "0" is perfect match
+			if (confidence < 100):
+				id = names[id]
+				confidence = "  {0}%".format(round(100 - confidence))
+			else:
+				id = "unknown"
+				confidence = "  {0}%".format(round(100 - confidence))
+			cv2.putText(img, str(id), (x+5,y-5), font, 1, (255,255,255), 2)
+			cv2.putText(img, str(confidence), (x+5,y+h-5), font, 1, (255,255,0), 1)
+		cv2.imshow('camera',img)
+		k = cv2.waitKey(10) & 0xff # Press 'ESC' for exiting video
+		if k == 27:
+			break
+
+	# Do a bit of cleanup
+	print("\n [INFO] Exiting Program and cleanup stuff")
+	cam.release()
+	cv2.destroyAllWindows()
+
+	return id #id가 unknown이면 등록된 사용자x //주의!!!!
+
+
 # main
 while True:
 	try:
-		if(sound == '한글'):
-			#tts=gTTS("현재 모드 한 그을", lang='ko', slow=False)
-			#tts.save('mode_kor.mp3')
-			os.system("omxplayer mode_kor.mp3")
-			os.system("omxplayer mode_sel.mp3")
+		# 얼굴인식
+		tts = gTTS("얼굴 인식을 시작합니다.", lang='ko', slow=False)
+		tts.save('face_recog.mp3')
+		os.system("omxplayer face_recog.mp3")
+		print("얼굴 인식 시작")
 
-			count = 0
-			count1 = 0
-			#tts=gTTS("모드를 선택해주세요.", lang='ko', slow=False)
-			#tts.save('mode_sel.mp3')
-			#os.system("omxplayer mode_sel.mp3")
-
-			while True:
-				if(count==54):
-					#tts = gTTS("모드 일번 입니다. 자음, 모음을 입력해주세요.", lang='ko', slow=False)
-					#tts.save('mode_1.mp3')
-					os.system("omxplayer mode_1.mp3")
-					while True:
-						out2 = count
-						count = KeyScan() #count = int(input())
-						time.sleep(0.5)
-						if(count == 54 or count == 55 or count == 56):
-							break
-						elif((count == 53 and (not join_jamos(text).strip()))):
-							os.system("omxplayer mode_sel.mp3")
-							break
-						elif (str(type(count)) == "<class 'int'>"):
-							mode1(hangul(count))
-						else:
-							print("error")
-				elif(count==55):
-					#tts = gTTS("모드 이번 입니다. 단어 또는 문장을 입력해주세요. ", lang='ko', slow=False)
-					#tts.save('mode_2.mp3')
-					os.system("omxplayer mode_2.mp3")
-					while True:
-						count = KeyScan() #count = int(input())
-						time.sleep(0.5)
-						if(count == 54 or count == 55 or count == 56):
-							text.clear()
-							break
-						elif((count == 53 and (not join_jamos(text).strip()))):
-							os.system("omxplayer mode_sel.mp3")
-							break
-						elif (str(type(count)) == "<class 'int'>"):
-							mode2(hangul(count))
-
-						else:
-							print("error")
-				elif(count==56): # mode3
-					#tts = gTTS("모드 삼번 입니다. 문제", lang='ko', slow=False)
-					#tts.save('mode_3.mp3')
-					os.system("omxplayer mode_3.mp3")
-
-					A = maria_set()
-					#A = random.choice(Q)
-
-					print('_'+A+'_')
-
-					tts = gTTS(A, lang='ko', slow=False)
-					tts.save('ex_ko.mp3')
-					os.system("omxplayer ex_ko.mp3")
-
-					while True:
-						count = KeyScan() #count = int(input())
-						time.sleep(0.5)
-						if(count==54 or count==55 or count==56):
-							text.clear()
-							break
-						elif(count == 53 and (not join_jamos(text).strip())):
-							os.system("omxplayer mode_sel.mp3")
-							break
-						elif (str(type(count)) == "<class 'int'>"):
-							mode3(hangul(count))
-						else:
-							print("error")
-				else:
-					count = KeyScan() #count = int(input())
-					print(count)
-					if(count == 53):
-						sound = '1'
-						break
-					time.sleep(0.5)
-		elif(sound == '영어'): #카운트 바꾸기
-			#tts=gTTS("현재 모드 영 어 ", lang='ko', slow=False)
-			#tts.save('mode_eng.mp3')
-			os.system("omxplayer mode_eng.mp3")
-			count = 0
-			count1 = 0
-			# tts=gTTS("모드를 선택해주세요.", lang='ko', slow=False)
-			# tts.save('mode_sel.mp3')
-			os.system("omxplayer mode_sel.mp3")
-
-			while True:
-				if (count1 == 30):
-					#tts = gTTS("모드 일번 입니다. 알파벳을 입력해주세요.", lang='ko', slow=False)
-					#tts.save('mode_4.mp3')
-					os.system("omxplayer mode_4.mp3")
-					while True:
-						out2 = count1
-						count1 = KeyScanEng() # count1 = int(input())
-						time.sleep(0.5)
-						if (count1 == 30 or count1 == 31 or count1 == 32):
-							break
-						elif((count1 == 29 and (not join_jamos(text).strip()))):
-							os.system("omxplayer mode_sel.mp3")
-							break
-						elif (str(type(count1)) == "<class 'int'>"):
-							mode4(abc(count1))
-						else:
-							print("error")
-				elif (count1 == 31):
-					#tts = gTTS("모드 이번 입니다. 단어 또는 문장을 입력해주세요. ", lang='ko', slow=False)
-					#tts.save('mode_5.mp3')
-					os.system("omxplayer mode_5.mp3")
-					while True:
-						count1 = KeyScanEng() # count = int(input())
-						time.sleep(0.5)
-						if (count1 == 30 or count1 == 31 or count1 == 32):
-							text.clear()
-							break
-						elif((count1 == 29 and (not join_jamos(text).strip()))):
-							os.system("omxplayer mode_sel.mp3")
-							break
-						elif (str(type(count1)) == "<class 'int'>"):
-							mode5(abc(count1))
-
-						else:
-							print("error")
-				elif (count1 == 32):  # mode3
-					#tts = gTTS("모드 삼번 입니다. 문제", lang='ko', slow=False)
-					#tts.save('mode_6.mp3')
-					os.system("omxplayer mode_6.mp3")
-
-					A = maria_set()
-					#A = random.choice(Q1)
-
-					print('_' + A + '_')
-
-					tts = gTTS(A, lang='en', slow=False)
-					tts.save('ex_en.mp3')
-					os.system("omxplayer ex_en.mp3")
-
-					while True:
-						count1 = KeyScanEng() # count1 = int(input())
-						time.sleep(0.5)
-						if (count1 == 30 or count1 == 31 or count1 == 32):
-							text.clear()
-							break
-						elif((count1 == 29 and (not join_jamos(text).strip()))):
-							os.system("omxplayer mode_sel.mp3")
-							break
-						elif (str(type(count1)) == "<class 'int'>"):
-							mode6(abc(count1))
-						else:
-							print("error")
-				else:
-					count1 = KeyScanEng() # count1 = int(input())
-					print(count1)
-					if(count1 == 29):
-						sound = '2'
-						break
-					time.sleep(0.5)
-
+		prtid = face_recognition()
+		print(prtid)
+		if(prtid != "unknown"):
+			# 로그인 성공
+			tts = gTTS("로그인 성공했습니다.", lang='ko', slow=False)
+			tts.save('login_success.mp3')
+			os.system("omxplayer login_success.mp3")
 		else:
-			# 언어 선택
-			#tts = gTTS("언어를 선택하세요. 한글, 영어", lang='ko', slow=False)
-			#tts.save('lan.mp3')
-			os.system("omxplayer lan.mp3")
-			print('언어 선택')
+			# 로그인 실패
+			tts = gTTS("로그인 실패했습니다.", lang='ko', slow=False)
+			tts.save('login_fail.mp3')
+			os.system("omxplayer login_fail.mp3")
 
-			#sound = voiceinput()
-			print(sound)
-			'''
-			if(sound == voiceinput()):
-				sound = '영어'
+		while(prtid != "unknown"):
+			if(sound == '한글'):
+				#tts=gTTS("현재 모드 한 그을", lang='ko', slow=False)
+				#tts.save('mode_kor.mp3')
+				os.system("omxplayer mode_kor.mp3")
+				os.system("omxplayer mode_sel.mp3")
+
+				count = 0
+				count1 = 0
+				#tts=gTTS("모드를 선택해주세요.", lang='ko', slow=False)
+				#tts.save('mode_sel.mp3')
+				#os.system("omxplayer mode_sel.mp3")
+
+				while True:
+					if(count==54):
+						#tts = gTTS("모드 일번 입니다. 자음, 모음을 입력해주세요.", lang='ko', slow=False)
+						#tts.save('mode_1.mp3')
+						os.system("omxplayer mode_1.mp3")
+						while True:
+							out2 = count
+							count = KeyScan() #count = int(input())
+							time.sleep(0.5)
+							if(count == 54 or count == 55 or count == 56):
+								break
+							elif((count == 53 and (not join_jamos(text).strip()))):
+								os.system("omxplayer mode_sel.mp3")
+								break
+							elif (str(type(count)) == "<class 'int'>"):
+								mode1(hangul(count))
+							else:
+								print("error")
+					elif(count==55):
+						#tts = gTTS("모드 이번 입니다. 단어 또는 문장을 입력해주세요. ", lang='ko', slow=False)
+						#tts.save('mode_2.mp3')
+						os.system("omxplayer mode_2.mp3")
+						while True:
+							count = KeyScan() #count = int(input())
+							time.sleep(0.5)
+							if(count == 54 or count == 55 or count == 56):
+								text.clear()
+								break
+							elif((count == 53 and (not join_jamos(text).strip()))):
+								os.system("omxplayer mode_sel.mp3")
+								break
+							elif (str(type(count)) == "<class 'int'>"):
+								mode2(hangul(count))
+
+							else:
+								print("error")
+					elif(count==56): # mode3
+						#tts = gTTS("모드 삼번 입니다. 문제", lang='ko', slow=False)
+						#tts.save('mode_3.mp3')
+						os.system("omxplayer mode_3.mp3")
+
+						A = maria_set()
+						#A = random.choice(Q)
+
+						print('_'+A+'_')
+
+						tts = gTTS(A, lang='ko', slow=False)
+						tts.save('ex_ko.mp3')
+						os.system("omxplayer ex_ko.mp3")
+
+						while True:
+							count = KeyScan() #count = int(input())
+							time.sleep(0.5)
+							if(count==54 or count==55 or count==56):
+								text.clear()
+								break
+							elif(count == 53 and (not join_jamos(text).strip())):
+								os.system("omxplayer mode_sel.mp3")
+								break
+							elif (str(type(count)) == "<class 'int'>"):
+								mode3(hangul(count))
+							else:
+								print("error")
+					else:
+						count = KeyScan() #count = int(input())
+						print(count)
+						if(count == 53):
+							sound = '1'
+							break
+						time.sleep(0.5)
+			elif(sound == '영어'): #카운트 바꾸기
+				#tts=gTTS("현재 모드 영 어 ", lang='ko', slow=False)
+				#tts.save('mode_eng.mp3')
+				os.system("omxplayer mode_eng.mp3")
+				count = 0
+				count1 = 0
+				# tts=gTTS("모드를 선택해주세요.", lang='ko', slow=False)
+				# tts.save('mode_sel.mp3')
+				os.system("omxplayer mode_sel.mp3")
+
+				while True:
+					if (count1 == 30):
+						#tts = gTTS("모드 일번 입니다. 알파벳을 입력해주세요.", lang='ko', slow=False)
+						#tts.save('mode_4.mp3')
+						os.system("omxplayer mode_4.mp3")
+						while True:
+							out2 = count1
+							count1 = KeyScanEng() # count1 = int(input())
+							time.sleep(0.5)
+							if (count1 == 30 or count1 == 31 or count1 == 32):
+								break
+							elif((count1 == 29 and (not join_jamos(text).strip()))):
+								os.system("omxplayer mode_sel.mp3")
+								break
+							elif (str(type(count1)) == "<class 'int'>"):
+								mode4(abc(count1))
+							else:
+								print("error")
+					elif (count1 == 31):
+						#tts = gTTS("모드 이번 입니다. 단어 또는 문장을 입력해주세요. ", lang='ko', slow=False)
+						#tts.save('mode_5.mp3')
+						os.system("omxplayer mode_5.mp3")
+						while True:
+							count1 = KeyScanEng() # count = int(input())
+							time.sleep(0.5)
+							if (count1 == 30 or count1 == 31 or count1 == 32):
+								text.clear()
+								break
+							elif((count1 == 29 and (not join_jamos(text).strip()))):
+								os.system("omxplayer mode_sel.mp3")
+								break
+							elif (str(type(count1)) == "<class 'int'>"):
+								mode5(abc(count1))
+
+							else:
+								print("error")
+					elif (count1 == 32):  # mode3
+						#tts = gTTS("모드 삼번 입니다. 문제", lang='ko', slow=False)
+						#tts.save('mode_6.mp3')
+						os.system("omxplayer mode_6.mp3")
+
+						A = maria_set()
+						#A = random.choice(Q1)
+
+						print('_' + A + '_')
+
+						tts = gTTS(A, lang='en', slow=False)
+						tts.save('ex_en.mp3')
+						os.system("omxplayer ex_en.mp3")
+
+						while True:
+							count1 = KeyScanEng() # count1 = int(input())
+							time.sleep(0.5)
+							if (count1 == 30 or count1 == 31 or count1 == 32):
+								text.clear()
+								break
+							elif((count1 == 29 and (not join_jamos(text).strip()))):
+								os.system("omxplayer mode_sel.mp3")
+								break
+							elif (str(type(count1)) == "<class 'int'>"):
+								mode6(abc(count1))
+							else:
+								print("error")
+					else:
+						count1 = KeyScanEng() # count1 = int(input())
+						print(count1)
+						if(count1 == 29):
+							sound = '2'
+							break
+						time.sleep(0.5)
+
 			else:
-				sound = '한글'
-			'''
+				# 언어 선택
+				#tts = gTTS("언어를 선택하세요. 한글, 영어", lang='ko', slow=False)
+				#tts.save('lan.mp3')
+				os.system("omxplayer lan.mp3")
+				print('언어 선택')
 
-			if(count==53):
-				sound = '영어'
+				#sound = voiceinput()
+				print(sound)
+				'''
+				if(sound == voiceinput()):
+					sound = '영어'
+				else:
+					sound = '한글'
+				'''
+
+				if(count==53):
+					sound = '영어'
 
 	except KeyboardInterrupt:
 		# Ctrl + C
