@@ -3,14 +3,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#b6e3f6" >
+    android:background="#E8EAF6" >
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="영어모드"
+        android:text="영어"
         android:textSize="50dp"
-        android:textColor="#FFFFFF"
+        android:textColor="#1D2D88"
         android:textStyle="bold"
         android:layout_marginBottom="20dp"
         android:layout_marginTop="150dp"
@@ -40,7 +40,7 @@
         android:layout_marginRight="40dp"
         android:background="@drawable/shape_list"
         android:layout_gravity="center_vertical"
-        android:text="▶ 문장 및 단어 학습"
+        android:text="▶ 단어 및 문장 학습"
         android:textSize="20dp"
         android:gravity="center_vertical"
         android:paddingLeft="10dp"
@@ -54,7 +54,7 @@
         android:layout_marginRight="40dp"
         android:background="@drawable/shape_list"
         android:layout_gravity="center_vertical"
-        android:text="▶ 복습 게임"
+        android:text="▶ 게임"
         android:textSize="20dp"
         android:gravity="center_vertical"
         android:paddingLeft="10dp"
