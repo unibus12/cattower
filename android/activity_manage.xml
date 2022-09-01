@@ -2,115 +2,361 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="20dp"
-    android:background="#B6E3F6">
-
-
-    <LinearLayout
-        android:layout_width="match_parent"
+    android:background="#E8EAF6"
+    android:gravity="center"
+    android:orientation="vertical">
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp"
-        android:layout_margin="30dp">
+        android:layout_marginTop="50dp"
+        android:layout_marginBottom="30dp"
+        android:text="학습 진도"
+        android:textColor="#303F9F"
+        android:textSize="50dp"
+        android:textStyle="bold" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="학습 관리"
-            android:textStyle="bold"
-            android:textSize="50dp"
-            android:textColor="#FFFFFF"
-            android:layout_margin="1dp"
-            android:textAlignment="center"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/last_day"
+        android:layout_width="360dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:textSize="20dp"
+        android:textColor="#FFFFFF"
+        android:text="마지막 학습일자: 2022년 5월 20일"
         android:background="@drawable/shape_list"
         android:padding="10dp"
-        android:layout_margin="30dp">
+        android:layout_marginBottom="10dp"/>
 
+    <LinearLayout
+        android:layout_width="360dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/shape_list"
+        android:orientation="horizontal"
+        android:paddingHorizontal="10dp"
+        >
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="목표 점수 : "
-            android:textColor="#FFFFFF"
+            android:text="목표 정답률"
             android:textSize="20dp"
+            android:textColor="#FFFFFF"
             />
-        <EditText
-            android:id="@+id/goal"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
-            android:textSize="20dp"
-            android:text="90"/>
 
+        <SeekBar
+            android:id="@+id/corr_goal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:padding="10dp"
+            android:max="10"
+            android:progress="0" />
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <TextView
+        android:layout_width="360dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@drawable/shape_list"
-        android:padding="20dp"
-        android:layout_margin="30dp">
-
-        <TextView
-            android:id="@+id/studytime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="총 학습 시간 : 4시간"
-            android:textColor="#FFFFFF"
-            android:textSize="20dp"/>
-
-    </LinearLayout>
-
+        android:text="   한글 게임 "
+        android:textSize="20dp"
+        android:textStyle="bold"
+        android:textColor="#303F9F"
+        android:layout_marginTop="15dp"/>
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="360dp"
         android:layout_height="wrap_content"
-        android:layout_margin="30dp"
-        android:background="@drawable/shape_list"
-        android:orientation="vertical"
-        android:padding="20dp">
-
-        <TextView
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:background="@drawable/shape_background"
+        android:gravity="center">
+        <ScrollView
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:text="▶ 정답률"
-            android:textColor="#FFFFFF"
-            android:textSize="25dp" />
+            android:layout_height="150dp">
+            <TableLayout
+                android:layout_width="340dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/table_background"
+                android:paddingBottom="1dp"
+                android:paddingTop="1dp"
+                android:paddingLeft="1dp"
+                android:stretchColumns="*">
 
-        <TextView
-            android:id="@+id/correct1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="1단계 : 75%"
-            android:textColor="#FFFFFF"
-            android:textSize="20dp" />
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
 
-        <TextView
-            android:id="@+id/correct2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="2단계 : 0%"
-            android:textColor="#FFFFFF"
-            android:textSize="20dp" />
+                    <TextView
+                        android:id="@+id/korState"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="단계 1"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
 
-        <TextView
-            android:id="@+id/correct3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="3단계 : 0%"
-            android:textColor="#FFFFFF"
-            android:textSize="20dp" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="정답여부"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/korWord1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="사과"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
+
+                    <TextView
+                        android:id="@+id/korYN1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="N"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/korWord2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="ㅑ"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
+
+                    <TextView
+                        android:id="@+id/korYN2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="N"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/korWord3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="ㅓ"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
+
+                    <TextView
+                        android:id="@+id/korYN3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="N"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
+                </TableRow>
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/korWord4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="ㅕ"
+                        android:textSize="20dp"
+                        android:textColor="@color/blue_800"/>
+
+                    <TextView
+                        android:id="@+id/korYN4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="N"
+                        android:textSize="20dp"
+                        android:textColor="@color/blue_800"/>
+                </TableRow>
+
+            </TableLayout>
+        </ScrollView>
 
     </LinearLayout>
 
+    <TextView
+        android:layout_width="360dp"
+        android:layout_height="wrap_content"
+        android:text="   영어 게임"
+        android:textSize="20dp"
+        android:textStyle="bold"
+        android:textColor="#303F9F"
+        android:layout_marginTop="15dp"/>
+    <LinearLayout
+        android:layout_width="360dp"
+        android:layout_height="wrap_content"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:background="@drawable/shape_background"
+        android:gravity="center">
+        <ScrollView
+            android:layout_width="wrap_content"
+            android:layout_height="150dp">
+            <TableLayout
+                android:layout_width="340dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/table_background"
+                android:paddingBottom="1dp"
+                android:paddingTop="1dp"
+                android:paddingLeft="1dp"
+                android:stretchColumns="*">
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/engState"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="단계 1"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="정답여부"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/engWord1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="apple"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
 
 
+                    <TextView
+                        android:id="@+id/engYN1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="N"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/engWord2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="umbrella"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
+
+                    <TextView
+                        android:id="@+id/engYN2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="N"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/engWord3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="comfortable"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
+
+                    <TextView
+                        android:id="@+id/engYN3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="N"
+                        android:textColor="@color/blue_800"
+                        android:textSize="20dp" />
+                </TableRow>
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/engWord4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="vegetable"
+                        android:textSize="20dp"
+                        android:textColor="@color/blue_800"/>
+
+                    <TextView
+                        android:id="@+id/engYN4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/text_shape"
+                        android:gravity="center"
+                        android:text="N"
+                        android:textSize="20dp"
+                        android:textColor="@color/blue_800"/>
+                </TableRow>
+            </TableLayout>
+        </ScrollView>
+    </LinearLayout>
 </LinearLayout>
