@@ -1,4 +1,5 @@
 #-*-coding: utf-8-*-
+from gpiozero import Motor
 import RPi.GPIO as GPIO
 import os
 import sys
@@ -14,22 +15,31 @@ import numpy as np
 from PIL import Image
 import socket
 import threading
+import math
 
 __author__ = 'info-lab'
 
-GPIO.setmode(GPIO.BOARD)
+GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings (False)
 
-Row = [19,21,23,29,31,33,35,37]
-Col = [22, 24, 26, 32, 36, 38, 8]
+# board
+#Row = [19,21,23,29,31,33,35,37]
+#Col = [22, 24, 26, 32, 36, 38, 8]
+
+# bcm
+Row = [10,9,11,5,6,13,19,26]
+#Col = [25,8,7,12,16,20,14]
+Col = [25,8,7,12,16,20,14]
+
+# bcm
+motor_pin = [4,17,27,23]
 
 han1 = ['ㄱ','ㄴ','ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
 han2 = ['ㅏ', 'ㅑ', 'ㅓ', 'ㅕ', 'ㅗ', 'ㅛ', 'ㅜ', 'ㅠ', 'ㅡ', 'ㅣ', 'ㅐ', 'ㅒ', 'ㅔ', 'ㅖ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅢ']
 han3 = ['ㄲ','ㄸ','ㅃ', 'ㅆ', 'ㅉ', ' ']
 eng1=['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
-Q = '사과 ', '하늘 ', '비행기 ', '우리나라 ', '안녕 ', '만나서 반가워 '
-Q1 = 'apple ', 'sky ', 'airplane ', 'korea ', 'hello ', 'box '
+Q = 0
 
 text=[]
 merge_jamo = ""
@@ -39,7 +49,7 @@ login_state = "x"
 count = 0
 count1 = 0
 
-sound = '1' #한글 영어
+sound = '' #한글 영어
 
 jcnt = 0
 
@@ -58,6 +68,8 @@ n = 0
 
 user_name = []
 
+activity = ""
+
 conn=pymysql.connect(host='localhost', user='root', password='1234', db='mydb', charset='utf8')
 cur=conn.cursor()
 
@@ -67,6 +79,12 @@ for i in range(8):
 for i in range(7):
         GPIO.setup(Col[i], GPIO.IN)
 
+for i in range(4):
+	GPIO.setup(motor_pin[i], GPIO.OUT)
+
+kor_motor = Motor(forward=4, backward=17)
+eng_motor = Motor(forward=27, backward=23)
+
 face_detector = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 IP = ''
@@ -74,6 +92,7 @@ PORT = 35000
 SIZE = 1024
 ADDR = (IP, PORT)
 msg = ''
+client_socket = ""
 
 c_mode="한영"
 
@@ -190,9 +209,7 @@ def percent():
 	global n
 	n=0
 	kor1=eng1=0
-	conn=pymysql.connect(host='localhost', user='root', password='1234', db='mydb', charset='utf8')
-	cur=conn.cursor()
-	cur.execute('select ans from tblRegister')
+	cur.execute('select ans from '+prtid+";")
 	rows = cur.fetchall()
 	ansarr.clear()
 
@@ -205,16 +222,47 @@ def percent():
 		elif(n>=12 and ansarr[n]=='y'):
 			eng1 = eng1+1
 		n=n+1
-	return kor1, eng1
-
-
+	return math.floor(kor1/12*100), math.floor(eng1/12*100)
 
 def answer(str1):
-	conn=pymysql.connect(host='localhost', user='root', password='1234', db='mydb', charset='utf8')
-	cur=conn.cursor()
-	cur.execute("update tblRegister set ans = 'y' where word = '" + str1 +"';")
+	cur.execute("update "+prtid+" set ans = 'y' where word = '" + str1 +"';")
 	conn.commit()
 
+def gamedata():
+	cur.execute('select ans, lastday, goal from '+prtid+";")
+	rows = cur.fetchall()
+	data = []
+
+	for row in rows:
+		data.append(row[0])
+	last_day = rows[0][1]
+	goal = rows[0][2] # 단위 : 10
+	print('lastday = ',last_day,', goal = ',goal)
+
+	if(data[0] != 'y' or data[1] != 'y' or data[2] != 'y' or data[3] != 'y'):
+		gamescore = "단계 1,"
+		gamescore += data[0]+','+data[1]+','+data[2]+','+data[3]+','
+	elif(data[4] != 'y' or data[5] != 'y' or data[6] != 'y' or data[7] != 'y'):
+		gamescore = "단계 2,"
+		gamescore += data[4]+','+data[5]+','+data[6]+','+data[7]+','
+	elif(data[8] != 'y' or data[9] != 'y' or data[10] != 'y' or data[11] != 'y'):
+		gamescore = "단계 3,"
+		gamescore += data[8]+','+data[9]+','+data[10]+','+data[11]+','
+
+	if(data[12] != 'y' or data[13] != 'y' or data[14] != 'y' or data[15] != 'y'):
+		gamescore += "단계 1,"
+		gamescore += data[12]+','+data[13]+','+data[14]+','+data[15]
+	elif(data[16] != 'y' or data[17] != 'y' or data[18] != 'y' or data[19] != 'y'):
+		gamescore += "단계 2,"
+		gamescore += data[16]+','+data[17]+','+data[18]+','+data[19]
+	elif(data[20] != 'y' or data[21] != 'y' or data[22] != 'y' or data[23] != 'y'):
+		gamescore += "단계 3,"
+		gamescore += data[20]+','+data[21]+','+data[22]+','+data[23]
+	elif(data[20] == 'y' and data[21] == 'y' and data[22] == 'y' and data[23] == 'y'):
+		gamescore += "단계 3,"
+		gamescore += data[20]+','+data[21]+','+data[22]+','+data[23]
+	print('gamescore = ',gamescore)
+	return last_day, goal, gamescore
 
 def hangul(num=0):
 	global out1
@@ -443,7 +491,7 @@ def mode3(a):
 		client_socket.sendall("현재학습확인,{},{}\r\n".format("한글,3",merge_jamo).encode())
 		print("message back to client : 현재학습확인,{},{}".format("한글,3",merge_jamo))
 
-	if(count == 53):
+	if(count == 53 and A!='end'):
 		tts = gTTS(merge_jamo, lang='ko', slow=False)
 		tts.save('./music/ex_ko.mp3')
 		#os.system("omxplayer ./music/ex_ko.mp3")
@@ -454,28 +502,31 @@ def mode3(a):
 		print('정답 비교'+A)
 
 		if (A==merge_jamo):
-			cur.execute("update tblRegister set ans = 'y' where word = '" + A + "';")
+			cur.execute("update "+prtid+" set ans = 'y' where word = '" + A + "';")
 			conn.commit()
 			#os.system("omxplayer ./music/ooo.mp3")
 			os.system("mpg321 -g 100 ./music/ooo.mp3")
 			#os.system("gtts-cli '정답입니다 ' -l ko --output ko_o.mp3")
-			#kor1, eng1= percent()
-			#print(kor1) # 0~100:1 step, 100~200:2 step, 200~300:3 step
 		else:
 			#os.system("omxplayer ./music/xxx.mp3")
 			os.system("mpg321 -g 100 ./music/xxx.mp3")
 			#os.system("gtts-cli '틀렸습니다. ' -l ko --output ko_x.mp3")
 
-		A = maria_set()
-		#A = random.choice(Q)
+		kor1, eng1= percent()
+		print("kor percent = ", kor1) # 0~100:1 step, 100~200:2 step, 200~300:3 step
 
-		print('문제'+A)
-		#os.system("omxplayer ./music/question.mp3") # 문제
-		os.system("mpg321 -g 100 ./music/question.mp3")
-		tts = gTTS(A, lang='ko', slow=False)
-		tts.save('./music/ex_ko.mp3')
-		#os.system("omxplayer ./music/ex_ko.mp3")
-		os.system("mpg321 -g 100 ./music/ex_ko.mp3")
+		A = maria_set()
+		if(A!='end'):
+			print('문제'+A)
+			#os.system("omxplayer ./music/question.mp3") # 문제
+			os.system("mpg321 -g 100 ./music/question.mp3")
+			tts = gTTS(A, lang='ko', slow=False)
+			tts.save('./music/ex_ko.mp3')
+			#os.system("omxplayer ./music/ex_ko.mp3")
+			os.system("mpg321 -g 100 ./music/ex_ko.mp3")
+		else:
+			print('모드 3 종료')
+			os.system("mpg321 -g 100 ./music/mode_sel.mp3")
 
 def abc(num=0):
 	global oute
@@ -547,7 +598,7 @@ def mode6(a): #알파벳 모드3
 		client_socket.sendall("현재학습확인,{},{}\r\n".format("영어,3",merge_jamo).encode())
 		print("message back to client : 현재학습확인,{},{}".format("영어,3",merge_jamo))
 
-	if(count1 == 29):
+	if(count1 == 29 and A!='end'):
 		tts = gTTS(merge_jamo, lang='en', slow=False)
 		tts.save('./music/ex_en.mp3')
 		os.system("mpg321 -g 100 ./music/ex_en.mp3")
@@ -557,38 +608,35 @@ def mode6(a): #알파벳 모드3
 		print('정답 비교'+A)
 		if (A==merge_jamo):
 			answer(merge_jamo)
-			conn=pymysql.connect(host='localhost', user='root', password='1234', db='mydb', charset='utf8')
-			cur=conn.cursor()
-			cur.execute("update tblRegister set ans = 'y' where word = '" + A + "';")
+			cur.execute("update "+prtid+" set ans = 'y' where word = '" + A + "';")
 			conn.commit()
 			#os.system("omxplayer ./music/ooo.mp3")
 			os.system("mpg321 -g 100 ./music/ooo.mp3")
-			kor1, eng1 = percent()
-			print(eng1) # 0~100:1 step, 100~200:2 step, 200~300:3 step
 		else:
 			#os.system("omxplayer ./music/xxx.mp3")
 			os.system("mpg321 -g 100 ./music/xxx.mp3")
 
-		A = maria_set()
-		#A = random.choice(Q1)
 		kor1, eng1 = percent()
-		print(eng1) # 0~100:1 step, 100~200:2 step, 200~300:3 step
+		print("eng percent = ", eng1) # 0~100:1 step, 100~200:2 step, 200~300:3 step
 
-		print('문제'+A)
-		#os.system("omxplayer ./music/question.mp3") # 문제
-		os.system("mpg321 -g 100 ./music/question.mp3")
+		A = maria_set()
+		if(A!='end'):
+			print('문제'+A)
+			#os.system("omxplayer ./music/question.mp3") # 문제
+			os.system("mpg321 -g 100 ./music/question.mp3")
 
-		tts = gTTS(A, lang='en', slow=False)
-		tts.save('./music/ex_en.mp3')
-		#os.system("omxplayer ./music/ex_en.mp3")
-		os.system("mpg321 -g 100 ./music/ex_en.mp3")
+			tts = gTTS(A, lang='en', slow=False)
+			tts.save('./music/ex_en.mp3')
+			#os.system("omxplayer ./music/ex_en.mp3")
+			os.system("mpg321 -g 100 ./music/ex_en.mp3")
+		else:
+			print('모드 3 종료')
+			os.system("mpg321 -g 100 ./music/mode_sel.mp3")
 
 def maria_set():
-	global n, A #, cur, conn
-	n=0
-	conn=pymysql.connect(host='localhost', user='root', password='1234', db='mydb', charset='utf8')
-	cur=conn.cursor()
-	cur.execute('select step, word, ans from tblRegister')
+	global Q, A
+	Q += 1
+	cur.execute('select step, word, ans from '+prtid+";")
 	rows = cur.fetchall()
 	ansarr.clear()
 
@@ -598,44 +646,55 @@ def maria_set():
 		ansarr.append(row[2])
 
 	if(sound == '한글'):
-		for i in range(0,12):
-			print("i=", i)
-			print('st, wo, ans = ', steparr[i], wordarr[i], ansarr[i])
+		print("Q=", Q)
+		print('st, wo, ans = ', steparr[Q-1], wordarr[Q-1], ansarr[Q-1])
 
-			if(steparr[i]==1 and ansarr[i]=='n'):
-				return wordarr[i] # 단어 출력해줌
-			else:
-				if(steparr[i]==2 and ansarr[i]=='n'):
-					return wordarr[i]
+		if(Q==5 or Q==9 or Q==13):
+			if(Q==5):
+				if(ansarr[0]=='y' and ansarr[1]=='y' and ansarr[2]=='y' and ansarr[3]=='y'):
+					return wordarr[Q-1]
 				else:
-					if(steparr[i]==3 and ansarr[i]=='n'):
-						return wordarr[i]
-
-		cur.execute("update tblRegister set ans = 'n';")
-		conn.commit()
-		return wordarr[0]
+					Q = 0
+					return 'end'
+			elif(n==9):
+				if(ansarr[4]=='y' and ansarr[5]=='y' and ansarr[6]=='y' and ansarr[7]=='y'):
+					return wordarr[Q-1]
+				else:
+					Q = 0
+					return 'end'
+			else:
+				Q = 0
+				return 'end'
+		else:
+			return wordarr[Q-1] # 단어 출력해줌
 
 	if(sound == '영어'):
-		for i in range(12,24):
-			print("i=", i)
-			print('st, wo, ans = ', steparr[i], wordarr[i], ansarr[i])
+		print("Q=", Q)
+		print('st, wo, ans = ', steparr[Q+11], wordarr[Q+11], ansarr[Q+11])
 
-			if(steparr[i]==1 and ansarr[i]=='n'):
-				return wordarr[i] # 단어 출력해줌
-			else:
-				if(steparr[i]==2 and ansarr[i]=='n'):
-					return wordarr[i]
+		if(Q==5 or Q==9 or Q==13):
+			if(Q==5):
+				if(ansarr[12]=='y' and ansarr[13]=='y' and ansarr[14]=='y' and ansarr[15]=='y'):
+					return wordarr[Q+11]
 				else:
-					if(steparr[i]==3 and ansarr[i]=='n'):
-						return wordarr[i]
-
-		cur.execute("update tblRegister set ans = 'n';")
-		conn.commit()
-		return wordarr[12]
+					Q = 0
+					return 'end'
+			elif(n==9):
+				if(ansarr[16]=='y' and ansarr[17]=='y' and ansarr[18]=='y' and ansarr[19]=='y'):
+					return wordarr[Q+11]
+				else:
+					Q = 0
+					return 'end'
+			else:
+				Q = 0
+				return 'end'
+		else:
+			return wordarr[Q+11] # 단어 출력해줌
 
 def han_mode():
-	global count, A, text, c_mode, out2
+	global count, A, text, c_mode, out2, merge_jamo, Q
 	count = 0
+	c_mode="한글"
 	tts = gTTS("한글이 선택되었습니다.", lang='ko', slow=False)
 	tts.save('./music/mode_kor.mp3')
 	os.system("mpg321 -g 100 ./music/mode_kor.mp3")
@@ -643,6 +702,9 @@ def han_mode():
 
 	while True:
 		if(count==54): # mode1
+			print(time.strftime('%Y-%m-%d', time.localtime(time.time())))
+			cur.execute("update "+prtid+" set lastday = "+str(time.strftime('%Y%m%d', time.localtime(time.time())))+" where id=1;")
+			conn.commit()
 			c_mode="한글,1"
 			#os.system("omxplayer ./music/mode_1.mp3") # 모드 일번 입니다. 자음, 모음을 입력해주세요.
 			os.system("mpg321 -g 100 ./music/mode_1.mp3")
@@ -651,6 +713,7 @@ def han_mode():
 				count = KeyScan() #count = int(input())
 				time.sleep(0.5)
 				if(count == 54 or count == 55 or count == 56):
+					merge_jamo = ""
 					text.clear()
 					break
 				elif((count == 53 and (not join_jamos(text).strip()))):
@@ -665,6 +728,9 @@ def han_mode():
 				else:
 					pass
 		elif(count==55): # mode2
+			print(time.strftime('%Y-%m-%d', time.localtime(time.time())))
+			cur.execute("update "+prtid+" set lastday = "+str(time.strftime('%Y%m%d', time.localtime(time.time())))+" where id=1;")
+			conn.commit()
 			c_mode="한글,2"
 			#os.system("omxplayer ./music/mode_2.mp3") # 모드 이번 입니다. 단어 또는 문장을 입력해주세요.
 			os.system("mpg321 -g 100 ./music/mode_2.mp3")
@@ -672,6 +738,7 @@ def han_mode():
 				count = KeyScan() #count = int(input())
 				time.sleep(0.5)
 				if(count == 54 or count == 55 or count == 56):
+					merge_jamo = ""
 					text.clear()
 					break
 				elif((count == 53 and (not join_jamos(text).strip()))):
@@ -685,12 +752,18 @@ def han_mode():
 				else:
 					pass
 		elif(count==56): # mode3
+			print(time.strftime('%Y-%m-%d', time.localtime(time.time())))
+			cur.execute("update "+prtid+" set lastday = "+str(time.strftime('%Y%m%d', time.localtime(time.time())))+" where id=1;")
+			conn.commit()
 			c_mode="한글,3"
 			#os.system("omxplayer ./music/mode_3.mp3") # 모드 삼번 입니다. 문제
 			os.system("mpg321 -g 100 ./music/mode_3.mp3")
 
+			cur.execute("update "+prtid+" set ans='n' where lang='한글';")
+			conn.commit()
+
+			Q = 0
 			A = maria_set()
-			#A = random.choice(Q)
 
 			print('_'+A+'_')
 
@@ -703,10 +776,12 @@ def han_mode():
 				count = KeyScan() #count = int(input())
 				time.sleep(0.5)
 				if(count==54 or count==55 or count==56):
+					Q = 0
+					merge_jamo = ""
 					text.clear()
 					break
 				elif(count == 53 and (not join_jamos(text).strip())):
-					#os.system("omxplayer ./music/mode_sel.mp3")
+					Q = 0
 					os.system("mpg321 -g 100 ./music/mode_sel.mp3")
 					break
 				elif(appsound=="영어"):
@@ -716,17 +791,21 @@ def han_mode():
 				else:
 					pass
 		elif(appsound=="영어"):
+			Q = 0
 			text.clear()
+			merge_jamo = ""
 			break
 		else:
 			count = KeyScan() #count = int(input())
 			print(count)
+			merge_jamo = ""
 			if(count == 53):
 				break
 			time.sleep(0.5)
 
 def eng_mode():
-	global count1, A, text, c_mode
+	global count1, A, text, c_mode, merge_jamo, Q
+	c_mode="영어"
 	count1 = 0
 	tts = gTTS("영어가 선택되었습니다.", lang='ko', slow=False)
 	tts.save('./music/mode_eng.mp3')
@@ -735,6 +814,9 @@ def eng_mode():
 
 	while True:
 		if (count1 == 30):
+			print(time.strftime('%Y-%m-%d', time.localtime(time.time())))
+			cur.execute("update "+prtid+" set lastday = "+str(time.strftime('%Y%m%d', time.localtime(time.time())))+" where id=1;")
+			conn.commit()
 			c_mode="영어,1"
 			#os.system("omxplayer ./music/mode_4.mp3") # 모드 일번 입니다. 알파벳을 입력해주세요.
 			os.system("mpg321 -g 100 ./music/mode_4.mp3")
@@ -743,6 +825,7 @@ def eng_mode():
 				count1 = KeyScanEng() # count1 = int(input())
 				time.sleep(0.5)
 				if (count1 == 30 or count1 == 31 or count1 == 32):
+					merge_jamo = ""
 					break
 				elif((count1 == 29 and (not join_jamos(text).strip()))):
 					#os.system("omxplayer ./music/mode_sel.mp3")
@@ -755,6 +838,9 @@ def eng_mode():
 				else:
 					pass
 		elif (count1 == 31):
+			print(time.strftime('%Y-%m-%d', time.localtime(time.time())))
+			cur.execute("update "+prtid+" set lastday = "+str(time.strftime('%Y%m%d', time.localtime(time.time())))+" where id=1;")
+			conn.commit()
 			c_mode="영어,2"
 			#os.system("omxplayer ./music/mode_5.mp3") # 모드 이번 입니다. 단어 또는 문장을 입력해주세요.
 			os.system("mpg321 -g 100 ./music/mode_5.mp3")
@@ -762,6 +848,7 @@ def eng_mode():
 				count1 = KeyScanEng() # count = int(input())
 				time.sleep(0.5)
 				if (count1 == 30 or count1 == 31 or count1 == 32):
+					merge_jamo = ""
 					text.clear()
 					break
 				elif((count1 == 29 and (not join_jamos(text).strip()))):
@@ -774,14 +861,20 @@ def eng_mode():
 					mode5(abc(count1))
 				else:
 					pass
-		elif (count1 == 32):  # mode3
+		elif (count1 == 32): # mode3
+			print(time.strftime('%Y-%m-%d', time.localtime(time.time())))
+			cur.execute("update "+prtid+" set lastday = "+str(time.strftime('%Y%m%d', time.localtime(time.time())))+" where id=1;")
+			conn.commit()
 			c_mode="영어,3"
 			#os.system("omxplayer ./music/mode_6.mp3") # 모드 삼번 입니다. 문제
 			os.system("mpg321 -g 100 ./music/mode_6.mp3")
-			A = maria_set()
-			#A = random.choice(Q1)
 
-			print('_' + A + '_')
+			cur.execute("update "+prtid+" set ans='n' where lang='영어';")
+			conn.commit()
+
+			Q = 0
+			A = maria_set()
+			print('_'+A+'_')
 
 			tts = gTTS(A, lang='en', slow=False)
 			tts.save('./music/ex_en.mp3')
@@ -792,10 +885,12 @@ def eng_mode():
 				count1 = KeyScanEng() # count1 = int(input())
 				time.sleep(0.5)
 				if (count1 == 30 or count1 == 31 or count1 == 32):
+					Q = 0
+					merge_jamo = ""
 					text.clear()
 					break
 				elif((count1 == 29 and (not join_jamos(text).strip()))):
-					#os.system("omxplayer ./music/mode_sel.mp3")
+					Q = 0
 					os.system("mpg321 -g 100 ./music/mode_sel.mp3")
 					break
 				elif(appsound=="한글"):
@@ -805,22 +900,23 @@ def eng_mode():
 				else:
 					pass
 		elif(appsound=="한글"):
+			Q = 0
 			text.clear()
+			merge_jamo = ""
 			break
 		else:
 			count1 = KeyScanEng() # count1 = int(input())
 			print(count1)
+			merge_jamo = ""
 			if(count1 == 29):
 				break
 			time.sleep(0.5)
 
 def face_dataset():
-	cam = cv2.VideoCapture(0)
+	cam = cv2.VideoCapture(-1)
 	cam.set(3, 640) # set video width
 	cam.set(4, 480) # set video height
 
-	# For each person, enter one numeric face id
-	#face_id = input('\n enter user id end press <return> ==>  ')
 	face_id = 1
 	while (os.path.exists("dataset/User." + str(face_id) + '.' + str(1) + ".jpg")):
 		print(face_id)
@@ -901,12 +997,17 @@ def face_recognition():
 	names = ['None']
 	while (os.path.exists("dataset/User." + str(face_id) + '.' + str(1) + ".jpg")):
 		print(face_id)
-		names.append("user " + str(face_id))
+		names.append("User" + str(face_id))
 		face_id += 1
 	print(names)
 
 	# Initialize and start realtime video capture
-	cam = cv2.VideoCapture(cv2.CAP_DSHOW+0)
+	cam = cv2.VideoCapture(-1)
+	if(cam.isOpened() == False):
+		print("캠 안열림!")
+	else:
+		print("캠 열림!")
+
 	cam.set(3, 640) # set video widht
 	cam.set(4, 480) # set video height
 
@@ -916,8 +1017,9 @@ def face_recognition():
 	percent = []
 
 	for count_p in range(10):
-		ret, img = cam.read()
-		gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+		ret, im = cam.read()
+		print("im = ", im)
+		gray = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
 
 		faces = faceCascade.detectMultiScale(
 			gray,
@@ -927,7 +1029,7 @@ def face_recognition():
 			)
 
 		for(x,y,w,h) in faces:
-			cv2.rectangle(img, (x,y), (x+w,y+h), (0,255,0), 2)
+			cv2.rectangle(im, (x,y), (x+w,y+h), (0,255,0), 2)
 			id, confidence = recognizer.predict(gray[y:y+h,x:x+w])
 			# Check if confidence is less them 100 ==> "0" is perfect match
 			if (confidence < 100):
@@ -942,9 +1044,9 @@ def face_recognition():
 
 			print("촬영 횟수 = "+str(count_p+1))
 
-			cv2.putText(img, str(id), (x+5,y-5), font, 1, (255,255,255), 2)
-			cv2.putText(img, str(confidence), (x+5,y+h-5), font, 1, (255,255,0), 1)
-		cv2.imshow('camera',img)
+			cv2.putText(im, str(id), (x+5,y-5), font, 1, (255,255,255), 2)
+			cv2.putText(im, str(confidence), (x+5,y+h-5), font, 1, (255,255,0), 1)
+		cv2.imshow('camera',im)
 
 		k = cv2.waitKey(10) & 0xff # Press 'ESC' for exiting video
 		if k == 27:
@@ -953,7 +1055,7 @@ def face_recognition():
 	percent_arr = np.array(percent)
 	Mean = round(np.mean(percent_arr))
 	print("mean = " + str(Mean))
-	if(Mean > 30):
+	if(Mean > 40):
 		pass
 	else:
 		id = "unknown"
@@ -971,7 +1073,6 @@ def menu_one():
 	os.system("mpg321 -g 100 ./music/step1.mp3") # 보드 앞에 정면을 보고 앉아주세요.
 	os.system("mpg321 -g 100 ./music/step2.mp3") #얼굴을 등록하는 중입니다.
 	face_dataset()
-	face_training()
 	os.system("mpg321 -g 100 ./music/step3.mp3") #얼굴 등록이 완료되었습니다.
 
 def menu_two():
@@ -981,8 +1082,20 @@ def menu_two():
 	prtid = face_recognition()
 
 def server():
-	global msg, prtid, count, appsound, count1, c_mode, menu, login_state
+	global msg, prtid, count, appsound, count1, c_mode, menu, login_state, activity
 	global appStudy, merge_jamo
+	global client_socket
+
+	print("server start")
+
+	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+		server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		server_socket.bind(ADDR)  # 주소 바인딩
+		server_socket.listen()  # 클라이언트의 요청을 받을 준비
+		client_socket, client_addr = server_socket.accept()  # 수신대기, 접속한 클라이언트 정보 (소켓, 주소) 반환
+		print("connected")
+		activity = "로그인"
+
 	print("thread start")
 
 	while (True):
@@ -990,57 +1103,72 @@ def server():
 		if (msg!=""):
 			print("[{}] massage : {}".format(client_addr, msg))
 			if(msg=="회원가입"):
+				activity = "회원가입"
 				menu = "일"
 			if(msg=="로그인"):
+				activity = "로그인"
 				menu = "이"
 			if(msg=="메뉴"):
+				activity = "메뉴"
 				appStudy = "x"
 			if(msg=="한글"):
+				activity = "한글"
 				appsound="한글"
 			if(msg=="영어"):
+				activity = "영어"
 				appsound="영어"
 			if(msg=="한글,1"):
+				activity = "한글"
 				appsound="한글"
 				count=54
 			if(msg=="한글,2"):
+				activity = "한글"
 				appsound="한글"
 				count=55
 			if(msg=="한글,3"):
+				activity = "한글"
 				appsound="한글"
 				count=56
 			if(msg=="영어,1"):
+				activity = "영어"
 				appsound="영어"
 				count1=30
 			if(msg=="영어,2"):
+				activity = "영어"
 				appsound="영어"
 				count1=31
 			if(msg=="영어,3"):
+				activity = "영어"
 				appsound="영어"
 				count1=32
 			if(msg=="현재학습확인"):
+				activity = "현재학습확인"
 				appStudy = "o"
 				if(merge_jamo):
 					print("study = ",merge_jamo)
 					client_socket.sendall("현재학습확인,{},{}\r\n".format(c_mode,merge_jamo).encode())
 					print("message back to client : 현재학습확인,{},{}".format(c_mode,merge_jamo))
 				else:
-					print("study = ",merge_jamo)
-					client_socket.sendall("현재학습확인,{},입력대기중\r\n".format(c_mode).encode())
-					print("message back to client : 현재학습확인,{},입력대기중".format(c_mode))
+					print("!study = ",c_mode)
+					client_socket.sendall("현재학습확인,{}\r\n".format(c_mode).encode())
+					print("message back to client : 현재학습확인,{}".format(c_mode))
 			if(msg[:2]=="정보"):
+				activity = "정보"
 				msg1, msg2 = percent()
 				client_socket.sendall("정보,{},{}\r\n".format(msg1,msg2).encode())
 				print("message back to client : 정보,{},{}".format(msg1,msg2))
+			if(msg[:2]=="진도"):
+				activity = "진도"
+				last_day, goal, gamescore = gamedata()
+				if(msg=="진도"):
+					client_socket.sendall("진도,{},{},{}\r\n".format(last_day,goal,gamescore).encode())
+					print("message back to client : 진도,{},{},{}".format(last_day,goal,gamescore))
+				else:
+					goal = msg[3:]
+					cur.execute("update "+prtid+" set goal = "+goal+" where id=1;")
+					conn.commit()
+					print("goal : {}".format(goal))
 	client_socket.close()  # 클라이언트 소켓 종료
-
-print("server start")
-
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
-	server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-	server_socket.bind(ADDR)  # 주소 바인딩
-	server_socket.listen()  # 클라이언트의 요청을 받을 준비
-	client_socket, client_addr = server_socket.accept()  # 수신대기, 접속한 클라이언트 정보 (소켓, 주소) 반환
-	print("connected")
 
 t=threading.Thread(target=server)
 t.start()
@@ -1050,18 +1178,38 @@ while True:
 	try:
 		if(login_state == "x"):
 			if(menu == "일"):
-				if(msg == "얼굴등록"):
+				if(msg == "얼굴등록" or msg == "얼굴등록 board"):
 					menu_one()
 					while(msg=="얼굴등록"):
 						pass
-					if(msg=="회원가입,success"):
+					if(msg=="회원가입,success" or msg == "얼굴등록 board"):
 						#tts = gTTS("회원가입이 완료되었습니다.", lang='ko', slow=False)
 						#tts.save('./music/signup_success.mp3')
 						os.system("mpg321 -g 100 ./music/signup_success.mp3")
+
+						# database 생성
+						face_id = 1
+						while (os.path.exists("dataset/User." + str(face_id) + '.' + str(1) + ".jpg")):
+							print(face_id)
+							face_id += 1
+
+						cur.execute("create table User" + str(face_id-1) + " (select * from user01);")
+						conn.commit()
+
+						# 새 훈련 데이터 생성
+						face_training()
+
 					elif(msg=="회원가입,cancel"):
 						#tts = gTTS("회원가입이 취소되었습니다.", lang='ko', slow=False)
 						#tts.save('./music/signup_fail.mp3')
 						os.system("mpg321 -g 100 ./music/signup_fail.mp3")
+
+						# 사진 삭제
+						face_id = 1
+						while (os.path.exists("dataset/User." + str(face_id) + '.' + str(1) + ".jpg")):
+							print(face_id)
+							face_id += 1
+						os.system("rm dataset/User."+ str(face_id-1) + '.*')
 					msg = ""
 					menu = ""
 				else:
@@ -1073,13 +1221,16 @@ while True:
 				if(prtid != "unknown"):
 					os.system("mpg321 -g 100 ./music/login_success.mp3") # 로그인 성공했습니다.
 					login_state = "o"
-					client_socket.sendall("로그인,success\r\n".encode())
+					print("activity = "+ activity)
+					if(activity == "로그인"):
+						client_socket.sendall("로그인,success\r\n".encode())
 					print("face login [{}] success".format(prtid))
 				else:
 					os.system("mpg321 -g 100 ./music/login_fail.mp3") # 로그인 실패했습니다.
 					login_state = "x"
-					client_socket.sendall("로그인,fail\r\n".encode())
-					client_socket.sendall("로그인,facelog_fail\r\n".encode())
+					if(activity == "로그인"):
+						client_socket.sendall("로그인,fail\r\n".encode())
+						client_socket.sendall("로그인,facelog_fail\r\n".encode())
 					print("face login fail")
 				menu = ""
 			else:
@@ -1089,29 +1240,41 @@ while True:
 				if(menu != "일" and menu != "이"):
 					menu = voiceinput()
 					if(menu=="일"):
-						msg = "얼굴등록"
+						msg = "얼굴등록 board"
 
 		elif(login_state == "o"):
 			if(sound == '한글'):
+				print("한글 모터 앞, 영어 모터 뒤")
+				kor_motor.forward()
+				eng_motor.backward()
+
 				han_mode()
 				sound = ""
 			elif(sound == '영어'): #카운트 바꾸기
+				print("한글 모터 뒤, 영어 모터 앞")
+				kor_motor.backward()
+				eng_motor.forward()
+
 				eng_mode()
 				sound = ""
 			else:
 				# 언어 선택
-				os.system("mpg321 -g 100 ./music/lan.mp3") # 언어를 선택하세요. 한글, 영어
+				#os.system("mpg321 -g 100 ./music/lan.mp3") # 언어를 선택하세요. 한글, 영어
 				print('언어 선택')
-				if(appsound!="한글" and appsound!="영어"):
+				#appsound = "영어"
+				if(appsound=="한글"):
+					sound = "한글"
+					c_mode = "한글"
+				elif(appsound=="영어"):
+					sound = "영어"
+					c_mode = "영어"
+				elif(appsound!="한글" and appsound!="영어"):
+					os.system("mpg321 -g 100 ./music/lan.mp3") # 언어를 선택하세요. 한글, 영어
 					sound = voiceinput()
 					print(sound)
 					c_mode = ""
-				elif(appsound=="한글"):
-					sound = "한글"
-					c_mode = ""
-				else:
-					sound = "영어"
-					c_mode = ""
+					count = None
+					count1 = None
 
 	except KeyboardInterrupt:
 		# Ctrl + C
