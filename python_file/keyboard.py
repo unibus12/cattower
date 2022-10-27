@@ -1,3 +1,4 @@
+
 #-*-coding: utf-8-*-
 from gpiozero import Motor
 import RPi.GPIO as GPIO
@@ -32,7 +33,7 @@ Row = [10,9,11,5,6,13,19,26]
 Col = [25,8,7,12,16,20,14]
 
 # bcm
-motor_pin = [4,17,27,23]
+motor_pin = [2,3,15,23]
 
 han1 = ['ㄱ','ㄴ','ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
 han2 = ['ㅏ', 'ㅑ', 'ㅓ', 'ㅕ', 'ㅗ', 'ㅛ', 'ㅜ', 'ㅠ', 'ㅡ', 'ㅣ', 'ㅐ', 'ㅒ', 'ㅔ', 'ㅖ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅢ']
@@ -73,7 +74,6 @@ activity = ""
 conn=pymysql.connect(host='localhost', user='root', password='1234', db='mydb', charset='utf8')
 cur=conn.cursor()
 
-
 for i in range(8):
         GPIO.setup(Row[i], GPIO.OUT)
 for i in range(7):
@@ -81,9 +81,12 @@ for i in range(7):
 
 for i in range(4):
 	GPIO.setup(motor_pin[i], GPIO.OUT)
+	GPIO.output(motor_pin[i], GPIO.LOW)
 
-kor_motor = Motor(forward=4, backward=17)
-eng_motor = Motor(forward=27, backward=23)
+kor_motor = Motor(forward=2, backward=3)
+eng_motor = Motor(forward=15, backward=23)
+mh = 0 #모터 한글 플래그 0이면 수납중
+me = 0 # 모터 영어
 
 face_detector = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
@@ -98,6 +101,67 @@ c_mode="한영"
 
 appStudy = "x"
 appsound = ""
+
+def motor_flag():
+	global mh, me, sound
+	if(sound =='한글'):
+		if(mh==0 and me==0):
+			kor_motor.forward(speed = 0.3)
+			time.sleep(1)
+			kor_motor.stop()
+			mh=1
+		elif(mh==1 and me==0):
+			pass
+		elif(mh==0 and me==1):
+			kor_motor.forward(speed = 0.3)
+			time.sleep(1)
+			kor_motor.stop()
+			eng_motor.backward(speed = 0.3)
+			time.sleep(4.2)
+			eng_motor.stop()
+			mh=1
+			me=0
+		elif(mh==1 and me==1):
+			eng_motor.backward(speed = 0.3)
+			time.sleep(4.2)
+			eng_motor.stop()
+			me=0
+	elif(sound =='영어'):
+		if(mh==0 and me==0):
+			eng_motor.forward(speed = 0.3)
+			time.sleep(3.5)
+			eng_motor.stop()
+			me=1
+		elif(mh==0 and me==1):
+			pass
+		elif(mh==1 and me==0):
+			eng_motor.forward(speed = 0.3)
+			time.sleep(3.5)
+			eng_motor.stop()
+			kor_motor.backward(speed = 0.4)
+			time.sleep(1)
+			kor_motor.stop()
+			mh=0
+			me=1
+		elif(mh==1 and me==1):
+			kor_motor.backward(speed = 0.4)
+			time.sleep(1)
+			kor_motor.stop()
+			mh=0
+	elif(sound =="종료"):
+		if(mh==0 and me==0):
+			pass
+		elif(mh==0 and me==1):
+			eng_motor.backward(speed = 0.3)
+			time.sleep(4.2)
+			eng_motor.stop()
+			me=0
+		elif(mh==1 and me==0):
+			kor_motor.backward(speed = 0.4)
+			time.sleep(1)
+			kor_motor.stop()
+			mh=0
+
 
 def KeyScan():
 	key_scan_line = [0,1,1,1,1,1,1,1]
@@ -1234,8 +1298,8 @@ while True:
 					print("face login fail")
 				menu = ""
 			else:
-				tts = gTTS("회원가입을 하시려면 일 , 로그인을 하시려면 이 를 말해주세요.", lang='ko', slow=False)
-				tts.save('./music/menu_sel.mp3')
+				#tts = gTTS("회원가입을 하시려면 일 , 로그인을 하시려면 이 를 말해주세요.", lang='ko', slow=False)
+				#tts.save('./music/menu_sel.mp3')
 				os.system("mpg321 -g 100 ./music/menu_sel.mp3") # 회원가입을 하시려면 일 , 로그인을 하시려면 이 를 말해주세요.
 				if(menu != "일" and menu != "이"):
 					menu = voiceinput()
@@ -1245,16 +1309,12 @@ while True:
 		elif(login_state == "o"):
 			if(sound == '한글'):
 				print("한글 모터 앞, 영어 모터 뒤")
-				kor_motor.forward()
-				eng_motor.backward()
-
+				motor_flag()
 				han_mode()
 				sound = ""
-			elif(sound == '영어'): #카운트 바꾸기
+			elif(sound == '영어'):
 				print("한글 모터 뒤, 영어 모터 앞")
-				kor_motor.backward()
-				eng_motor.forward()
-
+				motor_flag()
 				eng_mode()
 				sound = ""
 			else:
@@ -1275,7 +1335,9 @@ while True:
 					c_mode = ""
 					count = None
 					count1 = None
-
+					if(sound=="종료"):
+						motor_flag()
+						break
 	except KeyboardInterrupt:
 		# Ctrl + C
 		GPIO.cleanup()
@@ -1287,3 +1349,4 @@ while True:
 	#except:
 	#	print("문제가 많다")
 	#	pass
+print("종료")
