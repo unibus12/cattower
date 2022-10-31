@@ -1,4 +1,3 @@
-
 #-*-coding: utf-8-*-
 from gpiozero import Motor
 import RPi.GPIO as GPIO
@@ -107,14 +106,14 @@ def motor_flag():
 	if(sound =='한글'):
 		if(mh==0 and me==0):
 			kor_motor.forward(speed = 0.3)
-			time.sleep(1)
+			time.sleep(1.2)
 			kor_motor.stop()
 			mh=1
 		elif(mh==1 and me==0):
 			pass
 		elif(mh==0 and me==1):
 			kor_motor.forward(speed = 0.3)
-			time.sleep(1)
+			time.sleep(1.2)
 			kor_motor.stop()
 			eng_motor.backward(speed = 0.3)
 			time.sleep(4.2)
@@ -139,13 +138,13 @@ def motor_flag():
 			time.sleep(3.5)
 			eng_motor.stop()
 			kor_motor.backward(speed = 0.4)
-			time.sleep(1)
+			time.sleep(1.2)
 			kor_motor.stop()
 			mh=0
 			me=1
 		elif(mh==1 and me==1):
 			kor_motor.backward(speed = 0.4)
-			time.sleep(1)
+			time.sleep(1.2)
 			kor_motor.stop()
 			mh=0
 	elif(sound =="종료"):
@@ -158,7 +157,7 @@ def motor_flag():
 			me=0
 		elif(mh==1 and me==0):
 			kor_motor.backward(speed = 0.4)
-			time.sleep(1)
+			time.sleep(1.2)
 			kor_motor.stop()
 			mh=0
 
@@ -269,16 +268,18 @@ def KeyScanEng():
 		else:
 			key_scan_line[0] = 1
 
-def percent():
+def percent_func(l):
 	global n
 	n=0
 	kor1=eng1=0
-	cur.execute('select ans from '+prtid+";")
+	cur.execute('select ans, goal from '+prtid+";")
 	rows = cur.fetchall()
 	ansarr.clear()
 
 	for row in rows:
 		ansarr.append(row[0])
+
+	goal = rows[0][1]
 
 	for i in ansarr:
 		if(n<12 and ansarr[n]=='y'):
@@ -286,6 +287,20 @@ def percent():
 		elif(n>=12 and ansarr[n]=='y'):
 			eng1 = eng1+1
 		n=n+1
+
+	if(l=="k"):
+		if(kor1==goal):
+			os.system("mpg321 -g 100 ./music/goal.mp3")
+			return "o", math.floor(kor1/12*100)
+		else:
+			return "x", math.floor(kor1/12*100)
+	elif(l=="e"):
+		if(eng1==goal):
+			os.system("mpg321 -g 100 ./music/goal.mp3")
+			return "o", math.floor(eng1/12*100)
+		else:
+			return "x", math.floor(eng1/12*100)
+
 	return math.floor(kor1/12*100), math.floor(eng1/12*100)
 
 def answer(str1):
@@ -576,8 +591,9 @@ def mode3(a):
 			os.system("mpg321 -g 100 ./music/xxx.mp3")
 			#os.system("gtts-cli '틀렸습니다. ' -l ko --output ko_x.mp3")
 
-		kor1, eng1= percent()
+		sco, kor1= percent_func("k")
 		print("kor percent = ", kor1) # 0~100:1 step, 100~200:2 step, 200~300:3 step
+		print("ko score 달성 ", sco)
 
 		A = maria_set()
 		if(A!='end'):
@@ -680,8 +696,9 @@ def mode6(a): #알파벳 모드3
 			#os.system("omxplayer ./music/xxx.mp3")
 			os.system("mpg321 -g 100 ./music/xxx.mp3")
 
-		kor1, eng1 = percent()
+		sco, eng1 = percent_func("e")
 		print("eng percent = ", eng1) # 0~100:1 step, 100~200:2 step, 200~300:3 step
+		print("en score 달성 ", sco)
 
 		A = maria_set()
 		if(A!='end'):
@@ -1218,7 +1235,7 @@ def server():
 					print("message back to client : 현재학습확인,{}".format(c_mode))
 			if(msg[:2]=="정보"):
 				activity = "정보"
-				msg1, msg2 = percent()
+				msg1, msg2 = percent_func("i")
 				client_socket.sendall("정보,{},{}\r\n".format(msg1,msg2).encode())
 				print("message back to client : 정보,{},{}".format(msg1,msg2))
 			if(msg[:2]=="진도"):
@@ -1298,8 +1315,8 @@ while True:
 					print("face login fail")
 				menu = ""
 			else:
-				#tts = gTTS("회원가입을 하시려면 일 , 로그인을 하시려면 이 를 말해주세요.", lang='ko', slow=False)
-				#tts.save('./music/menu_sel.mp3')
+				tts = gTTS("회원가입을 하시려면 일 , 로그인을 하시려면 이 를 말해주세요.", lang='ko', slow=False)
+				tts.save('./music/menu_sel.mp3')
 				os.system("mpg321 -g 100 ./music/menu_sel.mp3") # 회원가입을 하시려면 일 , 로그인을 하시려면 이 를 말해주세요.
 				if(menu != "일" and menu != "이"):
 					menu = voiceinput()
@@ -1325,9 +1342,11 @@ while True:
 				if(appsound=="한글"):
 					sound = "한글"
 					c_mode = "한글"
+					appsound = ""
 				elif(appsound=="영어"):
 					sound = "영어"
 					c_mode = "영어"
+					appsound = ""
 				elif(appsound!="한글" and appsound!="영어"):
 					os.system("mpg321 -g 100 ./music/lan.mp3") # 언어를 선택하세요. 한글, 영어
 					sound = voiceinput()
